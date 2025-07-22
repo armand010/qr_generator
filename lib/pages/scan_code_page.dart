@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'dart:typed_data';
 import 'qr_result_page.dart';
+import 'bar_result_page.dart';
 
 // QR Data Parser class
 class QRDataParser {
@@ -520,7 +521,7 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
     }
   }
 
-  void _showResultDialog(String data, Uint8List? image) {
+  void _showResultDialog(String data, Uint8List? image, String? format) {
     // Prevent multiple dialogs
     if (_dialogOpen) return;
     
@@ -529,22 +530,38 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
       _dialogOpen = true;
     });
     
-    // Parse QR data to determine type
-    ParsedQRData parsedData = QRDataParser.parseQRData(data);
+    // Determine if it's a QR code or barcode based on format
+    bool isQRCode = format?.toLowerCase().contains('qr') ?? false;
     
-    // Navigate to result page instead of showing dialog
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QRResultPage(
-          parsedData: parsedData,
-          qrImage: image,
+    if (isQRCode) {
+      // Parse QR data and navigate to QR result page
+      ParsedQRData parsedData = QRDataParser.parseQRData(data);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QRResultPage(
+            parsedData: parsedData,
+            qrImage: image,
+          ),
         ),
-      ),
-    ).then((_) {
-      // Reset scanning state when returning from result page
-      _resetScanningState();
-    });
+      ).then((_) {
+        _resetScanningState();
+      });
+    } else {
+      // Parse barcode data and navigate to barcode result page
+      ParsedBarcodeData parsedData = BarcodeDataParser.parseBarcodeData(data, format);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BarcodeResultPage(
+            parsedData: parsedData,
+            barcodeImage: image,
+          ),
+        ),
+      ).then((_) {
+        _resetScanningState();
+      });
+    }
   }
   
   void _resetScanningState() {
@@ -571,7 +588,7 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
     return Column(
       children: [
         AppBar(
-          title: const Text('Scan QR Code'),
+          title: const Text('Scan QR Code / Barcode'),
           automaticallyImplyLeading: false,
           backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
@@ -597,6 +614,7 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
                   
                   if (barcodes.isNotEmpty) {
                     String currentCode = barcodes.first.rawValue ?? 'No Data';
+                    String? format = barcodes.first.format.name;
                     DateTime now = DateTime.now();
                     
                     // Prevent duplicate scans of the same code within 5 seconds
@@ -609,7 +627,7 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
                     _lastScannedCode = currentCode;
                     _lastScanTime = now;
                     
-                    _showResultDialog(currentCode, image);
+                    _showResultDialog(currentCode, image, format);
                   }
                 },
               ),
@@ -696,7 +714,392 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
               ),
               // Scan area frame
               Center(
-                child: Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 250,
+                      width: 250,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Corner brackets
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            child: Container(
+                              height: 30,
+                              width: 30,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
+                                    width: 4
+                                  ),
+                                  left: BorderSide(
+                                    color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
+                                    width: 4
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Container(
+                              height: 30,
+                              width: 30,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
+                                    width: 4
+                                  ),
+                                  right: BorderSide(
+                                    color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
+                                    width: 4
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            child: Container(
+                              height: 30,
+                              width: 30,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
+                                    width: 4
+                                  ),
+                                  left: BorderSide(
+                                    color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
+                                    width: 4
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              height: 30,
+                              width: 30,
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
+                                    width: 4
+                                  ),
+                                  right: BorderSide(
+                                    color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
+                                    width: 4
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        '📱 Point camera at QR Code or Barcode',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Widget asli dengan Scaffold (untuk standalone use)
+class ScanCodePage extends StatefulWidget {
+  const ScanCodePage({super.key});
+
+  @override
+  State<ScanCodePage> createState() => _ScanCodePageState();
+}
+
+class _ScanCodePageState extends State<ScanCodePage> {
+  int _currentIndex = 0;
+  MobileScannerController controller = MobileScannerController();
+  double _zoomFactor = 0.0;
+  bool _isFlashOn = false;
+  bool _isScanning = true;
+  String? _lastScannedCode;
+  DateTime? _lastScanTime;
+  bool _dialogOpen = false;
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      try {
+        // Show loading indicator
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Text('Analyzing image for QR codes...'),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        
+        // Analyze the selected image for QR codes
+        await controller.analyzeImage(image.path);
+        
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No QR code found in the selected image'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _showResultDialog(String data, Uint8List? image, String? format) {
+    if (_dialogOpen) return;
+    
+    setState(() {
+      _isScanning = false;
+      _dialogOpen = true;
+    });
+    
+    // Determine if it's a QR code or barcode based on format
+    bool isQRCode = format?.toLowerCase().contains('qr') ?? false;
+    
+    if (isQRCode) {
+      // Parse QR data and navigate to QR result page
+      ParsedQRData parsedData = QRDataParser.parseQRData(data);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QRResultPage(
+            parsedData: parsedData,
+            qrImage: image,
+          ),
+        ),
+      ).then((_) {
+        _resetScanningState();
+      });
+    } else {
+      // Parse barcode data and navigate to barcode result page
+      ParsedBarcodeData parsedData = BarcodeDataParser.parseBarcodeData(data, format);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BarcodeResultPage(
+            parsedData: parsedData,
+            barcodeImage: image,
+          ),
+        ),
+      ).then((_) {
+        _resetScanningState();
+      });
+    }
+  }
+
+  void _resetScanningState() {
+    if (mounted) {
+      setState(() {
+        _dialogOpen = false;
+        _lastScannedCode = null;
+        _lastScanTime = null;
+      });
+      
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted && !_dialogOpen) {
+          setState(() {
+            _isScanning = true;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan QR Code / Barcode'),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        actions: [
+          IconButton(
+            onPressed: _pickImageFromGallery,
+            icon: const Icon(Icons.photo_library),
+            tooltip: 'Pick from Gallery',
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: controller,
+            onDetect: (capture) {
+              if (!_isScanning || _dialogOpen) return;
+              
+              final List<Barcode> barcodes = capture.barcodes;
+              final Uint8List? image = capture.image;
+              
+              if (barcodes.isNotEmpty) {
+                String currentCode = barcodes.first.rawValue ?? 'No Data';
+                String? format = barcodes.first.format.name;
+                DateTime now = DateTime.now();
+                
+                if (_lastScannedCode == currentCode && 
+                    _lastScanTime != null && 
+                    now.difference(_lastScanTime!).inSeconds < 5) {
+                  return;
+                }
+                
+                _lastScannedCode = currentCode;
+                _lastScanTime = now;
+                
+                _showResultDialog(currentCode, image, format);
+              }
+            },
+          ),
+          // Camera controls overlay
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Flash toggle
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: IconButton(
+                    onPressed: () async {
+                      await controller.toggleTorch();
+                      setState(() {
+                        _isFlashOn = !_isFlashOn;
+                      });
+                    },
+                    icon: Icon(
+                      _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                // Camera flip
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: IconButton(
+                    onPressed: () async {
+                      await controller.switchCamera();
+                    },
+                    icon: const Icon(
+                      Icons.flip_camera_ios,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Zoom controls
+          Positioned(
+            bottom: 100,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Zoom: ${(_zoomFactor * 100).toInt()}%',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  Slider(
+                    value: _zoomFactor,
+                    min: 0.0,
+                    max: 1.0,
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    inactiveColor: Colors.white30,
+                    onChanged: (value) {
+                      setState(() {
+                        _zoomFactor = value;
+                      });
+                      controller.setZoomScale(value);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Scan area frame
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
                   height: 250,
                   width: 250,
                   decoration: BoxDecoration(
@@ -792,349 +1195,23 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Widget asli dengan Scaffold (untuk standalone use)
-class ScanCodePage extends StatefulWidget {
-  const ScanCodePage({super.key});
-
-  @override
-  State<ScanCodePage> createState() => _ScanCodePageState();
-}
-
-class _ScanCodePageState extends State<ScanCodePage> {
-  int _currentIndex = 0;
-  MobileScannerController controller = MobileScannerController();
-  double _zoomFactor = 0.0;
-  bool _isFlashOn = false;
-  bool _isScanning = true;
-  String? _lastScannedCode;
-  DateTime? _lastScanTime;
-  bool _dialogOpen = false;
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickImageFromGallery() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
-    if (image != null) {
-      try {
-        // Show loading indicator
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Text('Analyzing image for QR codes...'),
-                ],
-              ),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-        
-        // Analyze the selected image for QR codes
-        await controller.analyzeImage(image.path);
-        
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No QR code found in the selected image'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  void _showResultDialog(String data, Uint8List? image) {
-    if (_dialogOpen) return;
-    
-    setState(() {
-      _isScanning = false;
-      _dialogOpen = true;
-    });
-    
-    // Parse QR data to determine type
-    ParsedQRData parsedData = QRDataParser.parseQRData(data);
-    
-    // Navigate to result page instead of showing dialog
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QRResultPage(
-          parsedData: parsedData,
-          qrImage: image,
-        ),
-      ),
-    ).then((_) {
-      // Reset scanning state when returning from result page
-      _resetScanningState();
-    });
-  }
-
-  void _resetScanningState() {
-    if (mounted) {
-      setState(() {
-        _dialogOpen = false;
-        _lastScannedCode = null;
-        _lastScanTime = null;
-      });
-      
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        if (mounted && !_dialogOpen) {
-          setState(() {
-            _isScanning = true;
-          });
-        }
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan QR Code'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-        actions: [
-          IconButton(
-            onPressed: _pickImageFromGallery,
-            icon: const Icon(Icons.photo_library),
-            tooltip: 'Pick from Gallery',
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: controller,
-            onDetect: (capture) {
-              if (!_isScanning || _dialogOpen) return;
-              
-              final List<Barcode> barcodes = capture.barcodes;
-              final Uint8List? image = capture.image;
-              
-              if (barcodes.isNotEmpty) {
-                String currentCode = barcodes.first.rawValue ?? 'No Data';
-                DateTime now = DateTime.now();
-                
-                if (_lastScannedCode == currentCode && 
-                    _lastScanTime != null && 
-                    now.difference(_lastScanTime!).inSeconds < 5) {
-                  return;
-                }
-                
-                _lastScannedCode = currentCode;
-                _lastScanTime = now;
-                
-                _showResultDialog(currentCode, image);
-              }
-            },
-          ),
-          // Camera controls overlay
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Flash toggle
+                const SizedBox(height: 16),
                 Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.black54,
-                    borderRadius: BorderRadius.circular(25),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: IconButton(
-                    onPressed: () async {
-                      await controller.toggleTorch();
-                      setState(() {
-                        _isFlashOn = !_isFlashOn;
-                      });
-                    },
-                    icon: Icon(
-                      _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                  child: const Text(
+                    '📱 Point camera at QR Code or Barcode',
+                    style: TextStyle(
                       color: Colors.white,
-                    ),
-                  ),
-                ),
-                // Camera flip
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: IconButton(
-                    onPressed: () async {
-                      await controller.switchCamera();
-                    },
-                    icon: const Icon(
-                      Icons.flip_camera_ios,
-                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
               ],
-            ),
-          ),
-          // Zoom controls
-          Positioned(
-            bottom: 100,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Zoom: ${(_zoomFactor * 100).toInt()}%',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  Slider(
-                    value: _zoomFactor,
-                    min: 0.0,
-                    max: 1.0,
-                    activeColor: Theme.of(context).colorScheme.primary,
-                    inactiveColor: Colors.white30,
-                    onChanged: (value) {
-                      setState(() {
-                        _zoomFactor = value;
-                      });
-                      controller.setZoomScale(value);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Scan area frame
-          Center(
-            child: Container(
-              height: 250,
-              width: 250,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Stack(
-                children: [
-                  // Corner brackets
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    child: Container(
-                      height: 30,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
-                            width: 4
-                          ),
-                          left: BorderSide(
-                            color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
-                            width: 4
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Container(
-                      height: 30,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
-                            width: 4
-                          ),
-                          right: BorderSide(
-                            color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
-                            width: 4
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    child: Container(
-                      height: 30,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
-                            width: 4
-                          ),
-                          left: BorderSide(
-                            color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
-                            width: 4
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      height: 30,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
-                            width: 4
-                          ),
-                          right: BorderSide(
-                            color: _isScanning ? Theme.of(context).colorScheme.primary : Colors.orange, 
-                            width: 4
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
           // Scanning status indicator
