@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import '../../services/history_service.dart';
 
 class WiFiQRPage extends StatefulWidget {
   const WiFiQRPage({super.key});
@@ -59,6 +60,9 @@ class _WiFiQRPageState extends State<WiFiQRPage> {
           'WIFI:T:$_securityType;S:${_ssidController.text.trim()};P:${_passwordController.text.trim()};H:false;;';
       _showQR = true;
     });
+
+    // Add to history
+    HistoryService().addGeneratedItem(content: _qrData, format: 'QR_CODE');
 
     // Show success message
     ScaffoldMessenger.of(context).showSnackBar(

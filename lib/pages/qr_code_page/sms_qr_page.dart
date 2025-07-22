@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import '../../services/history_service.dart';
 
 class SMSQRPage extends StatefulWidget {
   const SMSQRPage({super.key});
@@ -64,6 +65,9 @@ class _SMSQRPageState extends State<SMSQRPage> {
       _qrData = smsto;
       _showQR = true;
     });
+
+    // Add to history
+    HistoryService().addGeneratedItem(content: _qrData, format: 'QR_CODE');
 
     //Success message
     ScaffoldMessenger.of(context).showSnackBar(

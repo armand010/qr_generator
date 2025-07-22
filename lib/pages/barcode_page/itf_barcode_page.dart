@@ -10,14 +10,14 @@ import 'package:gal/gal.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/history_service.dart';
 
-class EAN13BarcodePage extends StatefulWidget {
-  const EAN13BarcodePage({super.key});
+class ITFBarcodePage extends StatefulWidget {
+  const ITFBarcodePage({super.key});
 
   @override
-  State<EAN13BarcodePage> createState() => _EAN13BarcodePageState();
+  State<ITFBarcodePage> createState() => _ITFBarcodePageState();
 }
 
-class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
+class _ITFBarcodePageState extends State<ITFBarcodePage> {
   final TextEditingController _codeController = TextEditingController();
   final GlobalKey _barcodeKey = GlobalKey();
   String _barcodeData = '';
@@ -38,11 +38,11 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       });
       
       // Add to history
-      HistoryService().addGeneratedItem(content: _barcodeData, format: 'EAN_13');
+      HistoryService().addGeneratedItem(content: _barcodeData, format: 'ITF');
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('EAN-13 barcode generated successfully!'),
+          content: Text('ITF barcode generated successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -55,21 +55,6 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       _barcodeData = '';
       _showBarcode = false;
     });
-  }
-
-  // Calculate EAN-13 check digit
-  String _calculateCheckDigit(String code) {
-    if (code.length >= 12) {
-      String twelveDigits = code.substring(0, 12);
-      int sum = 0;
-      for (int i = 0; i < 12; i++) {
-        int digit = int.parse(twelveDigits[i]);
-        sum += (i % 2 == 0) ? digit : digit * 3;
-      }
-      int checkDigit = (10 - (sum % 10)) % 10;
-      return checkDigit.toString();
-    }
-    return '0';
   }
 
   // Function to capture barcode as image
@@ -114,7 +99,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       }
 
       final tempDir = await getTemporaryDirectory();
-      final fileName = 'ean13_barcode_${DateTime.now().millisecondsSinceEpoch}.png';
+      final fileName = 'itf_barcode_${DateTime.now().millisecondsSinceEpoch}.png';
       final tempFile = File('${tempDir.path}/$fileName');
       
       await tempFile.writeAsBytes(imageBytes);
@@ -124,7 +109,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('EAN-13 barcode saved to gallery successfully!'),
+          content: Text('ITF barcode saved to gallery successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -150,13 +135,13 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       if (imageBytes == null) return;
 
       final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/ean13_barcode_${DateTime.now().millisecondsSinceEpoch}.png');
+      final file = File('${tempDir.path}/itf_barcode_${DateTime.now().millisecondsSinceEpoch}.png');
       
       await file.writeAsBytes(imageBytes);
       await Share.shareXFiles(
         [XFile(file.path)],
-        text: 'EAN-13 Barcode: $_barcodeData',
-        subject: 'My EAN-13 Barcode',
+        text: 'ITF Barcode: $_barcodeData',
+        subject: 'My ITF Barcode',
       );
     } catch (e) {
       if (!mounted) return;
@@ -172,18 +157,18 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
   Widget _buildBarcode() {
     try {
       return Container(
-        width: 350, // Increased width for better scanning
-        height: 120, // Increased height for better proportions
+        width: 320,
+        height: 100,
         color: Colors.white,
         child: CustomPaint(
-          painter: EAN13Painter(_barcodeData),
-          size: const Size(350, 120),
+          painter: ITFPainter(_barcodeData),
+          size: const Size(320, 100),
         ),
       );
     } catch (e) {
       return Container(
-        width: 350,
-        height: 120,
+        width: 320,
+        height: 100,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.red.shade100,
@@ -196,7 +181,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
             Icon(Icons.error, color: Colors.red, size: 24),
             const SizedBox(height: 4),
             Text(
-              'Invalid EAN-13',
+              'Invalid ITF',
               style: TextStyle(color: Colors.red, fontSize: 12),
             ),
           ],
@@ -213,7 +198,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
           appBar: AppBar(
             backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-            title: const Text('EAN-13 Barcode'),
+            title: const Text('ITF Barcode'),
             centerTitle: true,
           ),
           body: SingleChildScrollView(
@@ -233,7 +218,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'EAN-13 Barcode Generator',
+                            'Interleaved 2 of 5 (ITF) Barcode Generator',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -246,31 +231,34 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                             keyboardType: TextInputType.number,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(13),
+                              LengthLimitingTextInputFormatter(20),
                             ],
                             decoration: InputDecoration(
-                              labelText: 'EAN-13 Code',
-                              hintText: '1234567890123',
+                              labelText: 'ITF Code',
+                              hintText: '1234567890',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
                               fillColor: Theme.of(context).colorScheme.surface,
-                              prefixIcon: const Icon(Icons.shopping_cart),
+                              prefixIcon: const Icon(Icons.insert_drive_file),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter EAN-13 code';
+                                return 'Please enter ITF code';
                               }
-                              if (value.length < 12 || value.length > 13) {
-                                return 'EAN-13 code must be 12 or 13 digits';
+                              if (value.length % 2 != 0) {
+                                return 'ITF code must have even number of digits';
+                              }
+                              if (value.length < 4 || value.length > 20) {
+                                return 'ITF code must be between 4-20 digits';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'EAN-13 is the most common barcode for retail products. Enter 12 digits (13th will be calculated) or 13 digits including check digit.',
+                            'ITF (Interleaved 2 of 5) requires an even number of digits. Commonly used for cartons and cases in logistics.',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -290,7 +278,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: const Text('Generate EAN-13'),
+                                  child: const Text('Generate ITF'),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -320,7 +308,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                         child: Column(
                           children: [
                             Text(
-                              'EAN-13 Barcode Result:',
+                              'ITF Barcode Result:',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -332,7 +320,10 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -343,7 +334,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    _barcodeData.length == 12 ? '${_barcodeData.substring(0, 12)}${_calculateCheckDigit(_barcodeData)}' : _barcodeData,
+                                    _barcodeData,
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -420,217 +411,134 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
   }
 }
 
-// Custom painter for EAN-13 barcode
-class EAN13Painter extends CustomPainter {
+// Custom painter for ITF barcode
+class ITFPainter extends CustomPainter {
   final String data;
   
-  EAN13Painter(this.data);
+  ITFPainter(this.data);
 
   @override
   void paint(Canvas canvas, Size size) {
     try {
-      // Validate and prepare the data
-      if (data.isEmpty || data.length < 12) {
-        _drawError(canvas, size);
-        return;
-      }
-
-      // Ensure we have exactly 13 digits
-      String code = data.replaceAll(RegExp(r'[^0-9]'), ''); // Remove non-digits
-      if (code.length < 12) {
-        _drawError(canvas, size);
-        return;
-      }
+      // Draw white background first
+      final backgroundPaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
       
-      // Take first 12 digits and calculate check digit
-      code = code.substring(0, 12);
-      int checkDigit = _calculateCheckDigit(code);
-      code += checkDigit.toString();
+      final paint = Paint()
+        ..color = Colors.black
+        ..style = PaintingStyle.fill;
 
-      // Generate barcode pattern
-      List<bool> barPattern = _generateEAN13Pattern(code);
+      // Generate ITF pattern
+      List<bool> barPattern = _generateITFPattern();
       
-      // Draw barcode with proper dimensions
-      _drawBars(canvas, size, barPattern);
+      // Draw barcode with proper quiet zones
+      final int totalModules = barPattern.length + 20; // 10 modules each side
+      final double moduleWidth = size.width / totalModules;
+      final double barHeight = size.height;
+      
+      double currentX = 10 * moduleWidth; // Start after left quiet zone
+      
+      for (int i = 0; i < barPattern.length; i++) {
+        if (barPattern[i]) {
+          canvas.drawRect(
+            Rect.fromLTWH(currentX, 0, moduleWidth, barHeight),
+            paint,
+          );
+        }
+        currentX += moduleWidth;
+      }
       
     } catch (e) {
-      debugPrint('EAN-13 generation error: $e');
-      _drawError(canvas, size);
+      // Draw error pattern
+      final paint = Paint()
+        ..color = Colors.red
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2;
+      
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        paint,
+      );
+      
+      // Draw X to indicate error
+      canvas.drawLine(
+        const Offset(0, 0),
+        Offset(size.width, size.height),
+        paint,
+      );
+      canvas.drawLine(
+        Offset(0, size.height),
+        Offset(size.width, 0),
+        paint,
+      );
     }
   }
 
-  int _calculateCheckDigit(String code) {
-    int sum = 0;
-    for (int i = 0; i < 12; i++) {
-      int digit = int.parse(code[i]);
-      // Multiply odd positions by 1, even positions by 3
-      sum += (i % 2 == 0) ? digit : digit * 3;
-    }
-    return (10 - (sum % 10)) % 10;
-  }
-
-  List<bool> _generateEAN13Pattern(String code) {
-    // EAN-13 encoding patterns - corrected for proper scanning
-    final List<String> leftOddPatterns = [
-      '0001101', // 0
-      '0011001', // 1
-      '0010011', // 2
-      '0111101', // 3
-      '0100011', // 4
-      '0110001', // 5
-      '0101111', // 6
-      '0111011', // 7
-      '0110111', // 8
-      '0001011'  // 9
-    ];
-    
-    final List<String> leftEvenPatterns = [
-      '0100111', // 0
-      '0110011', // 1
-      '0011011', // 2
-      '0100001', // 3
-      '0011101', // 4
-      '0111001', // 5
-      '0000101', // 6
-      '0010001', // 7
-      '0001001', // 8
-      '0010111'  // 9
-    ];
-    
-    final List<String> rightPatterns = [
-      '1110010', // 0
-      '1100110', // 1
-      '1101100', // 2
-      '1000010', // 3
-      '1011100', // 4
-      '1001110', // 5
-      '1010000', // 6
-      '1000100', // 7
-      '1001000', // 8
-      '1110100'  // 9
-    ];
-    
-    // First digit patterns (determines left half encoding) - corrected
-    final List<String> firstDigitPatterns = [
-      'LLLLLL', // 0
-      'LLGLGG', // 1
-      'LLGGLG', // 2
-      'LLGGGL', // 3
-      'LGLLGG', // 4
-      'LGGLLG', // 5
-      'LGGGLL', // 6
-      'LGLGLG', // 7
-      'LGLGGL', // 8
-      'LGGLGL'  // 9
-    ];
+  List<bool> _generateITFPattern() {
+    // ITF (Interleaved 2 of 5) standard encoding patterns
+    // Each digit is represented by 5 bars: 2 wide, 3 narrow
+    final Map<String, String> patterns = {
+      '0': 'NNWWN', // Narrow, Narrow, Wide, Wide, Narrow
+      '1': 'WNNNW',
+      '2': 'NWNNW', 
+      '3': 'WWNNN',
+      '4': 'NNWNW',
+      '5': 'WNWNN',
+      '6': 'NWWNN',
+      '7': 'NNNWW',
+      '8': 'WNNWN',
+      '9': 'NWNWN',
+    };
     
     List<bool> pattern = [];
     
-    int firstDigit = int.parse(code[0]);
-    String encodingPattern = firstDigitPatterns[firstDigit];
+    // Start pattern (NNNN)
+    pattern.addAll([true, false, true, false]);
     
-    // Start guard: 101
-    pattern.addAll([true, false, true]);
-    
-    // Left group (digits 1-6) - Fixed indexing
-    for (int i = 1; i <= 6; i++) {
-      int digit = int.parse(code[i]);
-      String digitPattern;
-      
-      if (encodingPattern[i - 1] == 'L') {
-        // Use left odd patterns (L-patterns)
-        digitPattern = leftOddPatterns[digit];
-      } else {
-        // Use left even patterns (G-patterns)
-        digitPattern = leftEvenPatterns[digit];
-      }
-      
-      // Add digit pattern
-      for (int j = 0; j < digitPattern.length; j++) {
-        pattern.add(digitPattern[j] == '1');
-      }
-    }
-    
-    // Center guard: 01010
-    pattern.addAll([false, true, false, true, false]);
-    
-    // Right group (digits 7-12) - Fixed to use proper right patterns
-    for (int i = 7; i <= 12; i++) {
-      int digit = int.parse(code[i]);
-      String digitPattern = rightPatterns[digit];
-      
-      // Add digit pattern
-      for (int j = 0; j < digitPattern.length; j++) {
-        pattern.add(digitPattern[j] == '1');
+    // Process pairs of digits (interleaved)
+    for (int i = 0; i < data.length; i += 2) {
+      if (i + 1 < data.length) {
+        String digit1 = data[i];
+        String digit2 = data[i + 1];
+        
+        String pattern1 = patterns[digit1] ?? 'NNWWN'; // Default pattern
+        String pattern2 = patterns[digit2] ?? 'NNWWN';
+        
+        // Interleave bars and spaces
+        for (int j = 0; j < 5; j++) {
+          // Bar from first digit (odd positions)
+          bool isWideBar = pattern1[j] == 'W';
+          if (isWideBar) {
+            // Wide bar (3 modules)
+            pattern.addAll([true, true, true]);
+          } else {
+            // Narrow bar (1 module)  
+            pattern.add(true);
+          }
+          
+          // Space from second digit (even positions)
+          bool isWideSpace = pattern2[j] == 'W';
+          if (isWideSpace) {
+            // Wide space (3 modules)
+            pattern.addAll([false, false, false]);
+          } else {
+            // Narrow space (1 module)
+            pattern.add(false);
+          }
+        }
       }
     }
     
-    // End guard: 101
-    pattern.addAll([true, false, true]);
+    // End pattern (WNN) - Wide, Narrow, Narrow
+    pattern.addAll([true, true, true, false, true]);
     
     return pattern;
   }
 
-  void _drawBars(Canvas canvas, Size size, List<bool> pattern) {
-    // Draw white background first
-    final backgroundPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
-    
-    final paint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.fill;
-    
-    // Calculate dimensions with proper quiet zones
-    final int totalModules = pattern.length + 11 + 7; // bars + left quiet zone + right quiet zone
-    final double moduleWidth = size.width / totalModules;
-    final double barHeight = size.height;
-    
-    double currentX = 11 * moduleWidth; // Start after left quiet zone
-    
-    for (int i = 0; i < pattern.length; i++) {
-      if (pattern[i]) {
-        // Draw black bar with full height
-        canvas.drawRect(
-          Rect.fromLTWH(
-            currentX, 
-            0, 
-            moduleWidth, 
-            barHeight
-          ),
-          paint,
-        );
-      }
-      currentX += moduleWidth;
-    }
-  }
-
-  void _drawError(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.red
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    
-    // Draw error rectangle
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      paint,
-    );
-    
-    // Draw X pattern
-    canvas.drawLine(
-      const Offset(0, 0),
-      Offset(size.width, size.height),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(0, size.height),
-      Offset(size.width, 0),
-      paint,
-    );
-  }
-
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return oldDelegate is ITFPainter && oldDelegate.data != data;
+  }
 }

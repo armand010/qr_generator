@@ -8,16 +8,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
 import '../../providers/theme_provider.dart';
-import '../../services/history_service.dart';
 
-class EAN13BarcodePage extends StatefulWidget {
-  const EAN13BarcodePage({super.key});
+class CODABARBarcodePage extends StatefulWidget {
+  const CODABARBarcodePage({super.key});
 
   @override
-  State<EAN13BarcodePage> createState() => _EAN13BarcodePageState();
+  State<CODABARBarcodePage> createState() => _CODABARBarcodePageState();
 }
 
-class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
+class _CODABARBarcodePageState extends State<CODABARBarcodePage> {
   final TextEditingController _codeController = TextEditingController();
   final GlobalKey _barcodeKey = GlobalKey();
   String _barcodeData = '';
@@ -33,16 +32,13 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
   void _generateBarcode() {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _barcodeData = _codeController.text.trim();
+        _barcodeData = _codeController.text.trim().toUpperCase();
         _showBarcode = true;
       });
       
-      // Add to history
-      HistoryService().addGeneratedItem(content: _barcodeData, format: 'EAN_13');
-      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('EAN-13 barcode generated successfully!'),
+          content: Text('CODABAR barcode generated successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -55,21 +51,6 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       _barcodeData = '';
       _showBarcode = false;
     });
-  }
-
-  // Calculate EAN-13 check digit
-  String _calculateCheckDigit(String code) {
-    if (code.length >= 12) {
-      String twelveDigits = code.substring(0, 12);
-      int sum = 0;
-      for (int i = 0; i < 12; i++) {
-        int digit = int.parse(twelveDigits[i]);
-        sum += (i % 2 == 0) ? digit : digit * 3;
-      }
-      int checkDigit = (10 - (sum % 10)) % 10;
-      return checkDigit.toString();
-    }
-    return '0';
   }
 
   // Function to capture barcode as image
@@ -114,7 +95,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       }
 
       final tempDir = await getTemporaryDirectory();
-      final fileName = 'ean13_barcode_${DateTime.now().millisecondsSinceEpoch}.png';
+      final fileName = 'codabar_barcode_${DateTime.now().millisecondsSinceEpoch}.png';
       final tempFile = File('${tempDir.path}/$fileName');
       
       await tempFile.writeAsBytes(imageBytes);
@@ -124,7 +105,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('EAN-13 barcode saved to gallery successfully!'),
+          content: Text('CODABAR barcode saved to gallery successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -150,13 +131,13 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
       if (imageBytes == null) return;
 
       final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/ean13_barcode_${DateTime.now().millisecondsSinceEpoch}.png');
+      final file = File('${tempDir.path}/codabar_barcode_${DateTime.now().millisecondsSinceEpoch}.png');
       
       await file.writeAsBytes(imageBytes);
       await Share.shareXFiles(
         [XFile(file.path)],
-        text: 'EAN-13 Barcode: $_barcodeData',
-        subject: 'My EAN-13 Barcode',
+        text: 'CODABAR Barcode: $_barcodeData',
+        subject: 'My CODABAR Barcode',
       );
     } catch (e) {
       if (!mounted) return;
@@ -172,18 +153,18 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
   Widget _buildBarcode() {
     try {
       return Container(
-        width: 350, // Increased width for better scanning
-        height: 120, // Increased height for better proportions
+        width: 320, // Increased width
+        height: 100,
         color: Colors.white,
         child: CustomPaint(
-          painter: EAN13Painter(_barcodeData),
-          size: const Size(350, 120),
+          painter: CODABARPainter(_barcodeData),
+          size: const Size(320, 100),
         ),
       );
     } catch (e) {
       return Container(
-        width: 350,
-        height: 120,
+        width: 320,
+        height: 100,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.red.shade100,
@@ -196,7 +177,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
             Icon(Icons.error, color: Colors.red, size: 24),
             const SizedBox(height: 4),
             Text(
-              'Invalid EAN-13',
+              'Invalid CODABAR',
               style: TextStyle(color: Colors.red, fontSize: 12),
             ),
           ],
@@ -213,7 +194,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
           appBar: AppBar(
             backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-            title: const Text('EAN-13 Barcode'),
+            title: const Text('CODABAR Barcode'),
             centerTitle: true,
           ),
           body: SingleChildScrollView(
@@ -233,7 +214,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'EAN-13 Barcode Generator',
+                            'CODABAR Barcode Generator',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -243,34 +224,50 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _codeController,
-                            keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(13),
+                              FilteringTextInputFormatter.allow(RegExp(r'[a-dA-D0-9\$\-\+\.\/\:]')),
+                              LengthLimitingTextInputFormatter(20),
                             ],
                             decoration: InputDecoration(
-                              labelText: 'EAN-13 Code',
-                              hintText: '1234567890123',
+                              labelText: 'CODABAR Data',
+                              hintText: 'A1234567890B',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
                               fillColor: Theme.of(context).colorScheme.surface,
-                              prefixIcon: const Icon(Icons.shopping_cart),
+                              prefixIcon: const Icon(Icons.medical_information),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter EAN-13 code';
+                                return 'Please enter CODABAR data';
                               }
-                              if (value.length < 12 || value.length > 13) {
-                                return 'EAN-13 code must be 12 or 13 digits';
+                              
+                              String upper = value.toUpperCase();
+                              
+                              // Check start and stop characters
+                              if (!RegExp(r'^[A-D]').hasMatch(upper)) {
+                                return 'Must start with A, B, C, or D';
                               }
+                              if (!RegExp(r'[A-D]$').hasMatch(upper)) {
+                                return 'Must end with A, B, C, or D';
+                              }
+                              
+                              // Check valid characters
+                              if (!RegExp(r'^[A-D0-9\$\-\+\.\/\:]+$').hasMatch(upper)) {
+                                return 'Invalid characters. Use: 0-9, A-D, \$, -, +, ., /, :';
+                              }
+                              
+                              if (value.length < 3) {
+                                return 'CODABAR must be at least 3 characters';
+                              }
+                              
                               return null;
                             },
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'EAN-13 is the most common barcode for retail products. Enter 12 digits (13th will be calculated) or 13 digits including check digit.',
+                            'CODABAR is used in libraries, blood banks, and photo labs. Format: [A-D][0-9/\$/-/+/./:/][A-D]\nExample: A123456789B',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -290,7 +287,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: const Text('Generate EAN-13'),
+                                  child: const Text('Generate CODABAR'),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -320,7 +317,7 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                         child: Column(
                           children: [
                             Text(
-                              'EAN-13 Barcode Result:',
+                              'CODABAR Barcode Result:',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -332,7 +329,10 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -343,9 +343,9 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    _barcodeData.length == 12 ? '${_barcodeData.substring(0, 12)}${_calculateCheckDigit(_barcodeData)}' : _barcodeData,
+                                    _barcodeData,
                                     style: const TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
                                     ),
@@ -420,217 +420,146 @@ class _EAN13BarcodePageState extends State<EAN13BarcodePage> {
   }
 }
 
-// Custom painter for EAN-13 barcode
-class EAN13Painter extends CustomPainter {
+// Custom painter for CODABAR barcode
+class CODABARPainter extends CustomPainter {
   final String data;
   
-  EAN13Painter(this.data);
+  CODABARPainter(this.data);
+
+  // CODABAR standard character patterns according to ANSI/AIM BC3-1995
+  // Each pattern: [bar, space, bar, space, bar, space, bar]
+  // 0 = narrow (1x), 1 = wide (2.25x to 3x ratio)
+  static const Map<String, String> _patterns = {
+    '0': '0000011',  // NNNNNWW
+    '1': '0000110',  // NNNNWWN  
+    '2': '0001001',  // NNNWNWN
+    '3': '1100000',  // WWNNNNN
+    '4': '0010010',  // NNWNWNN
+    '5': '1000010',  // WNNNWNN
+    '6': '0100001',  // NWNNNNW
+    '7': '0100100',  // NWNNWNN
+    '8': '0110000',  // NWWNNNNN
+    '9': '1001000',  // WNNWNNNN
+    '-': '0001100',  // NNNWWNN
+    '\$': '0011000',  // NNWWNNN
+    ':': '1000101',  // WNNWNWN
+    '/': '1010001',  // WNWNNNW
+    '.': '1010100',  // WNWNWNN
+    '+': '0010101',  // NNWNWNW
+    'A': '0011001',  // NNWWNWN (start/stop)
+    'B': '0101001',  // NWNWNWN (start/stop)
+    'C': '0001011',  // NNNWNWW (start/stop)
+    'D': '0001110',  // NNNWWWN (start/stop)
+  };
 
   @override
   void paint(Canvas canvas, Size size) {
     try {
-      // Validate and prepare the data
-      if (data.isEmpty || data.length < 12) {
-        _drawError(canvas, size);
-        return;
-      }
-
-      // Ensure we have exactly 13 digits
-      String code = data.replaceAll(RegExp(r'[^0-9]'), ''); // Remove non-digits
-      if (code.length < 12) {
-        _drawError(canvas, size);
-        return;
-      }
+      // Draw white background
+      final backgroundPaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
       
-      // Take first 12 digits and calculate check digit
-      code = code.substring(0, 12);
-      int checkDigit = _calculateCheckDigit(code);
-      code += checkDigit.toString();
+      final paint = Paint()
+        ..color = Colors.black
+        ..style = PaintingStyle.fill;
 
-      // Generate barcode pattern
-      List<bool> barPattern = _generateEAN13Pattern(code);
+      // Calculate dimensions with proper quiet zones
+      double barHeight = size.height * 0.7;
+      double startY = size.height * 0.15;
       
-      // Draw barcode with proper dimensions
-      _drawBars(canvas, size, barPattern);
+      // Draw barcode with proper CODABAR encoding
+      _drawCODABARBarcode(canvas, size, paint, barHeight, startY);
       
     } catch (e) {
-      debugPrint('EAN-13 generation error: $e');
       _drawError(canvas, size);
     }
   }
-
-  int _calculateCheckDigit(String code) {
-    int sum = 0;
-    for (int i = 0; i < 12; i++) {
-      int digit = int.parse(code[i]);
-      // Multiply odd positions by 1, even positions by 3
-      sum += (i % 2 == 0) ? digit : digit * 3;
+  
+  void _drawCODABARBarcode(Canvas canvas, Size size, Paint paint, double barHeight, double startY) {
+    if (data.isEmpty) return;
+    
+    // Calculate total width units needed (considering wide/narrow ratios)
+    double totalWidthUnits = 0;
+    
+    // Add quiet zones (10 narrow units each side)
+    totalWidthUnits += 20;
+    
+    // Calculate width for each character
+    for (int i = 0; i < data.length; i++) {
+      String char = data[i].toUpperCase();
+      if (_patterns.containsKey(char)) {
+        String pattern = _patterns[char]!;
+        
+        // Each character has 7 elements, calculate total width units
+        for (int j = 0; j < pattern.length; j++) {
+          bool isWide = pattern[j] == '1';
+          totalWidthUnits += isWide ? 2.5 : 1.0; // Wide:Narrow ratio = 2.5:1
+        }
+        
+        // Add inter-character gap (1 narrow unit)
+        if (i < data.length - 1) {
+          totalWidthUnits += 1.0;
+        }
+      }
     }
-    return (10 - (sum % 10)) % 10;
-  }
-
-  List<bool> _generateEAN13Pattern(String code) {
-    // EAN-13 encoding patterns - corrected for proper scanning
-    final List<String> leftOddPatterns = [
-      '0001101', // 0
-      '0011001', // 1
-      '0010011', // 2
-      '0111101', // 3
-      '0100011', // 4
-      '0110001', // 5
-      '0101111', // 6
-      '0111011', // 7
-      '0110111', // 8
-      '0001011'  // 9
-    ];
     
-    final List<String> leftEvenPatterns = [
-      '0100111', // 0
-      '0110011', // 1
-      '0011011', // 2
-      '0100001', // 3
-      '0011101', // 4
-      '0111001', // 5
-      '0000101', // 6
-      '0010001', // 7
-      '0001001', // 8
-      '0010111'  // 9
-    ];
+    // Calculate narrow module width to fit within barcode area
+    double availableWidth = size.width * 0.9; // Use 90% of width, leave 5% margin each side
+    double narrowModuleWidth = availableWidth / totalWidthUnits;
     
-    final List<String> rightPatterns = [
-      '1110010', // 0
-      '1100110', // 1
-      '1101100', // 2
-      '1000010', // 3
-      '1011100', // 4
-      '1001110', // 5
-      '1010000', // 6
-      '1000100', // 7
-      '1001000', // 8
-      '1110100'  // 9
-    ];
+    // Start drawing from left margin
+    double currentX = size.width * 0.05; // 5% left margin
     
-    // First digit patterns (determines left half encoding) - corrected
-    final List<String> firstDigitPatterns = [
-      'LLLLLL', // 0
-      'LLGLGG', // 1
-      'LLGGLG', // 2
-      'LLGGGL', // 3
-      'LGLLGG', // 4
-      'LGGLLG', // 5
-      'LGGGLL', // 6
-      'LGLGLG', // 7
-      'LGLGGL', // 8
-      'LGGLGL'  // 9
-    ];
+    // Add left quiet zone (10 narrow modules)
+    currentX += narrowModuleWidth * 10;
     
-    List<bool> pattern = [];
-    
-    int firstDigit = int.parse(code[0]);
-    String encodingPattern = firstDigitPatterns[firstDigit];
-    
-    // Start guard: 101
-    pattern.addAll([true, false, true]);
-    
-    // Left group (digits 1-6) - Fixed indexing
-    for (int i = 1; i <= 6; i++) {
-      int digit = int.parse(code[i]);
-      String digitPattern;
+    // Draw each character
+    for (int i = 0; i < data.length; i++) {
+      String char = data[i].toUpperCase();
       
-      if (encodingPattern[i - 1] == 'L') {
-        // Use left odd patterns (L-patterns)
-        digitPattern = leftOddPatterns[digit];
-      } else {
-        // Use left even patterns (G-patterns)
-        digitPattern = leftEvenPatterns[digit];
+      if (!_patterns.containsKey(char)) continue;
+      
+      String pattern = _patterns[char]!;
+      
+      // Draw the 7 elements (bar-space-bar-space-bar-space-bar)
+      for (int j = 0; j < pattern.length; j++) {
+        bool isWide = pattern[j] == '1';
+        double elementWidth = narrowModuleWidth * (isWide ? 2.5 : 1.0);
+        
+        // Draw bars on even positions (0, 2, 4, 6) - bars
+        // Skip odd positions (1, 3, 5) - spaces
+        if (j % 2 == 0) {
+          canvas.drawRect(
+            Rect.fromLTWH(currentX, startY, elementWidth, barHeight),
+            paint,
+          );
+        }
+        
+        currentX += elementWidth;
       }
       
-      // Add digit pattern
-      for (int j = 0; j < digitPattern.length; j++) {
-        pattern.add(digitPattern[j] == '1');
+      // Add inter-character gap (1 narrow module)
+      if (i < data.length - 1) {
+        currentX += narrowModuleWidth;
       }
-    }
-    
-    // Center guard: 01010
-    pattern.addAll([false, true, false, true, false]);
-    
-    // Right group (digits 7-12) - Fixed to use proper right patterns
-    for (int i = 7; i <= 12; i++) {
-      int digit = int.parse(code[i]);
-      String digitPattern = rightPatterns[digit];
-      
-      // Add digit pattern
-      for (int j = 0; j < digitPattern.length; j++) {
-        pattern.add(digitPattern[j] == '1');
-      }
-    }
-    
-    // End guard: 101
-    pattern.addAll([true, false, true]);
-    
-    return pattern;
-  }
-
-  void _drawBars(Canvas canvas, Size size, List<bool> pattern) {
-    // Draw white background first
-    final backgroundPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
-    
-    final paint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.fill;
-    
-    // Calculate dimensions with proper quiet zones
-    final int totalModules = pattern.length + 11 + 7; // bars + left quiet zone + right quiet zone
-    final double moduleWidth = size.width / totalModules;
-    final double barHeight = size.height;
-    
-    double currentX = 11 * moduleWidth; // Start after left quiet zone
-    
-    for (int i = 0; i < pattern.length; i++) {
-      if (pattern[i]) {
-        // Draw black bar with full height
-        canvas.drawRect(
-          Rect.fromLTWH(
-            currentX, 
-            0, 
-            moduleWidth, 
-            barHeight
-          ),
-          paint,
-        );
-      }
-      currentX += moduleWidth;
     }
   }
-
+  
   void _drawError(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.red
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     
-    // Draw error rectangle
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      paint,
-    );
-    
-    // Draw X pattern
-    canvas.drawLine(
-      const Offset(0, 0),
-      Offset(size.width, size.height),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(0, size.height),
-      Offset(size.width, 0),
-      paint,
-    );
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+    canvas.drawLine(const Offset(0, 0), Offset(size.width, size.height), paint);
+    canvas.drawLine(Offset(0, size.height), Offset(size.width, 0), paint);
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return oldDelegate is CODABARPainter && oldDelegate.data != data;
+  }
 }

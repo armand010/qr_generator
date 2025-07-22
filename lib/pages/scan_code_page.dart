@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'dart:typed_data';
 import 'qr_result_page.dart';
 import 'bar_result_page.dart';
+import '../services/history_service.dart';
 
 // QR Data Parser class
 class QRDataParser {
@@ -534,6 +535,9 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
     bool isQRCode = format?.toLowerCase().contains('qr') ?? false;
     
     if (isQRCode) {
+      // Add to history
+      HistoryService().addScannedItem(content: data, format: 'QR_CODE');
+      
       // Parse QR data and navigate to QR result page
       ParsedQRData parsedData = QRDataParser.parseQRData(data);
       Navigator.push(
@@ -548,6 +552,9 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
         _resetScanningState();
       });
     } else {
+      // Add to history
+      HistoryService().addScannedItem(content: data, format: format ?? 'UNKNOWN');
+      
       // Parse barcode data and navigate to barcode result page
       ParsedBarcodeData parsedData = BarcodeDataParser.parseBarcodeData(data, format);
       Navigator.push(
@@ -922,6 +929,9 @@ class _ScanCodePageState extends State<ScanCodePage> {
     bool isQRCode = format?.toLowerCase().contains('qr') ?? false;
     
     if (isQRCode) {
+      // Add to history
+      HistoryService().addScannedItem(content: data, format: 'QR_CODE');
+      
       // Parse QR data and navigate to QR result page
       ParsedQRData parsedData = QRDataParser.parseQRData(data);
       Navigator.push(
@@ -936,6 +946,9 @@ class _ScanCodePageState extends State<ScanCodePage> {
         _resetScanningState();
       });
     } else {
+      // Add to history
+      HistoryService().addScannedItem(content: data, format: format ?? 'UNKNOWN');
+      
       // Parse barcode data and navigate to barcode result page
       ParsedBarcodeData parsedData = BarcodeDataParser.parseBarcodeData(data, format);
       Navigator.push(

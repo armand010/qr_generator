@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import '../../services/history_service.dart';
 
 class ContactQRPage extends StatefulWidget {
   const ContactQRPage({super.key});
@@ -113,6 +114,9 @@ class _ContactQRPageState extends State<ContactQRPage> {
       _qrData = vCard;
       _showQR = true;
     });
+
+    // Add to history
+    HistoryService().addGeneratedItem(content: _qrData, format: 'QR_CODE');
 
     // Show success message
     ScaffoldMessenger.of(context).showSnackBar(

@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import '../../services/history_service.dart';
 
 class TextQRPage extends StatefulWidget {
   const TextQRPage({super.key});
@@ -33,6 +34,17 @@ class _TextQRPageState extends State<TextQRPage> {
         _qrData = _textController.text.trim();
         _showQR = true;
       });
+      
+      // Add to history
+      HistoryService().addGeneratedItem(content: _qrData, format: 'QR_CODE');
+      
+      //Success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('QR code generated successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -41,14 +53,6 @@ class _TextQRPageState extends State<TextQRPage> {
         ),
       );
     }
-
-    //Success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('QR code generated successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   void _clearQR() {

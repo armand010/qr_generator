@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import '../../services/history_service.dart';
 
 class URLQRPage extends StatefulWidget {
   const URLQRPage({super.key});
@@ -38,6 +39,9 @@ class _URLQRPageState extends State<URLQRPage> {
         _qrData = url;
         _showQR = true;
       });
+      
+      // Add to history
+      HistoryService().addGeneratedItem(content: _qrData, format: 'QR_CODE');
     }
     else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
 import '../../providers/theme_provider.dart';
+import '../../services/history_service.dart';
 
 class Code128BarcodePage extends StatefulWidget {
   const Code128BarcodePage({super.key});
@@ -35,6 +36,9 @@ class _Code128BarcodePageState extends State<Code128BarcodePage> {
         _barcodeData = _codeController.text.trim();
         _showBarcode = true;
       });
+      
+      // Add to history
+      HistoryService().addGeneratedItem(content: _barcodeData, format: 'CODE_128');
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
