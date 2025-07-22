@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:pretty_qr_code/pretty_qr_code.dart';
+import 'dart:ui' as ui;
+import 'dart:io';
+import 'package:gal/gal.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/history_item.dart';
 import '../services/history_service.dart';
 import '../providers/theme_provider.dart';
 import 'qr_result_page.dart';
-import 'scan_code_page.dart';
+import 'bar_result_page.dart';
+import 'scan_code_page.dart'; // For QRDataParser and ParsedQRData
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -175,53 +182,70 @@ class _HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin
   }
 
   void _openItemDetails(HistoryItem item) {
-    if (item.isQRCode) {
-      // Parse QR data for result page
-      final parsedData = ParsedQRData(
-        type: QRDataType.text, // Default to text for history items
-        rawData: item.content,
-        parsedData: {'text': item.content},
-      );
-      
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => QRResultPage(parsedData: parsedData),
-        ),
-      );
-    } else {
-      // For barcode, show a simple dialog since we don't have BarResultPage
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('${item.format} Barcode'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Content:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              SelectableText(item.content),
-              const SizedBox(height: 16),
-              Text('Format: ${item.format}'),
-              Text('Type: ${item.isScanned ? 'Scanned' : 'Generated'}'),
-              if (item.category != null)
-                Text('Category: ${item.category}'),
-            ],
+    if (item.isScanned) {
+      // For scanned items, show result pages as before
+      if (item.isQRCode) {
+        final parsedData = QRDataParser.parseQRData(item.content);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => QRResultPage(parsedData: parsedData),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => _copyToClipboard(item.content),
-              child: const Text('Copy'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      );
+        );
+      } else {
+        final parsedData = BarcodeDataParser.parseBarcodeData(item.content, item.format);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BarcodeResultPage(parsedData: parsedData),
+          ),
+        );
+      }
+    } else {
+      // For generated items, show the generator page with the content
+      _showGeneratedItemPage(item);
     }
+  }
+
+  void _showGeneratedItemPage(HistoryItem item) {
+    if (item.isQRCode) {
+      // Navigate to appropriate QR generator page based on content type
+      _navigateToQRGeneratorPage(item);
+    } else {
+      // Navigate to appropriate barcode generator page
+      _navigateToBarcodeGeneratorPage(item);
+    }
+  }
+
+  void _navigateToQRGeneratorPage(HistoryItem item) {
+    // For now, navigate to Text QR page as default
+    // You can enhance this to detect the type and navigate to specific pages
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _getQRGeneratorPage(item),
+      ),
+    );
+  }
+
+  void _navigateToBarcodeGeneratorPage(HistoryItem item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _getBarcodeGeneratorPage(item),
+      ),
+    );
+  }
+
+  Widget _getQRGeneratorPage(HistoryItem item) {
+    // You'll need to import the QR generator pages
+    // For now, return a simple page that shows the generated QR
+    return _GeneratedQRDisplayPage(item: item);
+  }
+
+  Widget _getBarcodeGeneratorPage(HistoryItem item) {
+    // Return a page that shows the generated barcode
+    return _GeneratedBarcodeDisplayPage(item: item);
   }
 
   Widget _buildHistoryItem(HistoryItem item) {
@@ -463,5 +487,656 @@ class _FilterChip extends StatelessWidget {
       selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
       checkmarkColor: Theme.of(context).colorScheme.primary,
     );
+  }
+}
+
+// Page to display generated QR code
+class _GeneratedQRDisplayPage extends StatelessWidget {
+  final HistoryItem item;
+  
+  // Global key for RepaintBoundary
+  final GlobalKey _qrKey = GlobalKey();
+
+  _GeneratedQRDisplayPage({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Generated QR Code'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // QR Code Display
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Text(
+                      'QR Code Result:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    RepaintBoundary(
+                      key: _qrKey,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 2,
+                          ),
+                        ),
+                        child: SizedBox(
+                          height: 200,
+                          width: 200,
+                          child: PrettyQrView.data(
+                            data: item.content,
+                            decoration: const PrettyQrDecoration(
+                              shape: PrettyQrSmoothSymbol(
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Data Display
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Data:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: SelectableText(
+                        item.content,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Generated: ${item.displaySubtitle}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Action Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _saveQRToGallery(context),
+                        icon: const Icon(Icons.save_alt, color: Colors.white),
+                        iconSize: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Save',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _shareContent(context, item.content),
+                        icon: const Icon(Icons.share, color: Colors.white),
+                        iconSize: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Share',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            Text(
+              'Tip: "Save" stores to gallery, "Share" sends to other apps',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Function to capture QR code as image
+  Future<Uint8List?> _captureQRCode() async {
+    try {
+      RenderRepaintBoundary boundary =
+          _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      debugPrint('Error capturing QR code: $e');
+      return null;
+    }
+  }
+
+  // Function to save QR code directly to gallery
+  Future<void> _saveQRToGallery(BuildContext context) async {
+    if (!context.mounted) return;
+
+    try {
+      // Capture QR code
+      Uint8List? imageBytes = await _captureQRCode();
+      if (imageBytes == null) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to capture QR code'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Check if gallery access is available
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        // Request permission
+        final requestGranted = await Gal.requestAccess();
+        if (!requestGranted) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Gallery access permission denied. Using share instead.',
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          // Fallback to share
+          await _shareQRCode(context);
+          return;
+        }
+      }
+
+      // Save to temporary file first
+      final tempDir = await getTemporaryDirectory();
+      final fileName = 'qr_code_${DateTime.now().millisecondsSinceEpoch}.png';
+      final tempFile = File('${tempDir.path}/$fileName');
+
+      // Write image to temporary file
+      await tempFile.writeAsBytes(imageBytes);
+
+      // Save to gallery using gal package
+      await Gal.putImage(tempFile.path, album: 'QR Codes');
+
+      if (!context.mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('QR code saved to gallery successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Clean up temporary file
+      try {
+        await tempFile.delete();
+      } catch (e) {
+        debugPrint('Failed to delete temp file: $e');
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      debugPrint('Save error: $e');
+
+      // Show error and fallback to share
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save to gallery. Using share instead.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      // Fallback to share functionality
+      await _shareQRCode(context);
+    }
+  }
+
+  // Function to share QR code
+  Future<void> _shareQRCode(BuildContext context) async {
+    if (!context.mounted) return;
+
+    try {
+      // Capture QR code
+      Uint8List? imageBytes = await _captureQRCode();
+      if (imageBytes == null) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to capture QR code'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Get temporary directory
+      final tempDir = await getTemporaryDirectory();
+      final file = File(
+        '${tempDir.path}/qr_code_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+
+      // Write image to file
+      await file.writeAsBytes(imageBytes);
+
+      // Share the file
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'Generated QR Code',
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to share: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _shareContent(BuildContext context, String content) {
+    Share.share(content, subject: 'Generated QR Code');
+  }
+}
+
+// Page to display generated barcode
+class _GeneratedBarcodeDisplayPage extends StatelessWidget {
+  final HistoryItem item;
+  
+  // Global key for RepaintBoundary  
+  final GlobalKey _barcodeKey = GlobalKey();
+
+  _GeneratedBarcodeDisplayPage({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('${item.format} Barcode'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Barcode Display
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Text(
+                      '${item.format} Barcode Result:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    RepaintBoundary(
+                      key: _barcodeKey,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 2,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildBarcodeWidget(item.format, item.content),
+                            const SizedBox(height: 8),
+                            Text(
+                              item.content,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Data Display
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Barcode Data:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: SelectableText(
+                        item.content,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Format: ${item.format} • Generated: ${item.displaySubtitle}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Action Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _saveBarcodeToGallery(context),
+                        icon: Icon(Icons.save_alt, color: Theme.of(context).colorScheme.onPrimary),
+                        iconSize: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Save',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _shareContent(context, item.content),
+                        icon: Icon(Icons.share, color: Theme.of(context).colorScheme.onPrimary),
+                        iconSize: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Share',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBarcodeWidget(String format, String data) {
+    // For simplicity, show a placeholder barcode representation
+    // In a real implementation, you would use the actual barcode generation logic
+    return Container(
+      height: 100,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Simple barcode representation with vertical lines
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(20, (index) => Container(
+              width: index % 3 == 0 ? 3 : 1,
+              height: 60,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              color: Colors.black,
+            )),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Function to capture barcode as image
+  Future<Uint8List?> _captureBarcode() async {
+    try {
+      RenderRepaintBoundary boundary =
+          _barcodeKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      debugPrint('Error capturing barcode: $e');
+      return null;
+    }
+  }
+
+  // Function to save barcode
+  Future<void> _saveBarcodeToGallery(BuildContext context) async {
+    if (!context.mounted) return;
+
+    try {
+      Uint8List? imageBytes = await _captureBarcode();
+      if (imageBytes == null) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to capture barcode'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        final requestGranted = await Gal.requestAccess();
+        if (!requestGranted) {
+          if (!context.mounted) return;
+          await _shareBarcode(context);
+          return;
+        }
+      }
+
+      final tempDir = await getTemporaryDirectory();
+      final fileName = '${item.format.toLowerCase()}_barcode_${DateTime.now().millisecondsSinceEpoch}.png';
+      final tempFile = File('${tempDir.path}/$fileName');
+
+      await tempFile.writeAsBytes(imageBytes);
+      await Gal.putImage(tempFile.path, album: 'Barcodes');
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${item.format} barcode saved to gallery successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      try {
+        await tempFile.delete();
+      } catch (e) {
+        debugPrint('Failed to delete temp file: $e');
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      await _shareBarcode(context);
+    }
+  }
+
+  // Function to share barcode
+  Future<void> _shareBarcode(BuildContext context) async {
+    if (!context.mounted) return;
+
+    try {
+      Uint8List? imageBytes = await _captureBarcode();
+      if (imageBytes == null) return;
+
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/${item.format.toLowerCase()}_barcode_${DateTime.now().millisecondsSinceEpoch}.png');
+
+      await file.writeAsBytes(imageBytes);
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: '${item.format} Barcode: ${item.content}',
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to share: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _shareContent(BuildContext context, String content) {
+    Share.share(content, subject: 'Generated ${item.format} Barcode');
   }
 }

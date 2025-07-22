@@ -338,13 +338,6 @@ class BarcodeResultPage extends StatelessWidget {
         _buildInfoRow('Product Code:', parsedData.parsedData['code'] ?? ''),
         _buildInfoRow('Format:', parsedData.parsedData['format'] ?? ''),
         const SizedBox(height: 12),
-        Text(
-          'This appears to be a product barcode. You can search for this product online using the code above.',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            fontSize: 14,
-          ),
-        ),
       ],
     );
   }
@@ -356,13 +349,6 @@ class BarcodeResultPage extends StatelessWidget {
         _buildInfoRow('ISBN:', parsedData.parsedData['isbn'] ?? ''),
         _buildInfoRow('Format:', parsedData.parsedData['format'] ?? ''),
         const SizedBox(height: 12),
-        Text(
-          'This is a book ISBN (International Standard Book Number). You can search for this book online or in library catalogs.',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            fontSize: 14,
-          ),
-        ),
       ],
     );
   }
@@ -374,13 +360,6 @@ class BarcodeResultPage extends StatelessWidget {
         _buildInfoRow('ISSN:', parsedData.parsedData['issn'] ?? ''),
         _buildInfoRow('Format:', parsedData.parsedData['format'] ?? ''),
         const SizedBox(height: 12),
-        Text(
-          'This is an ISSN (International Standard Serial Number) for a journal or magazine.',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            fontSize: 14,
-          ),
-        ),
       ],
     );
   }
@@ -391,13 +370,6 @@ class BarcodeResultPage extends StatelessWidget {
       children: [
         _buildInfoRow('Data:', parsedData.parsedData['text'] ?? ''),
         const SizedBox(height: 12),
-        Text(
-          'This barcode contains text or numeric data.',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            fontSize: 14,
-          ),
-        ),
       ],
     );
   }
@@ -452,23 +424,6 @@ class BarcodeResultPage extends StatelessWidget {
         ),
         
         const SizedBox(height: 12),
-        
-        // Search online button (for products and books)
-        if (parsedData.type == BarcodeDataType.product || parsedData.type == BarcodeDataType.isbn)
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _searchOnline(context),
-              icon: const Icon(Icons.search),
-              label: Text(parsedData.type == BarcodeDataType.isbn ? 'Search Book' : 'Search Product'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
