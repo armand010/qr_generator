@@ -29,7 +29,47 @@ class ParsedBarcodeData {
 // Barcode Data Parser class
 class BarcodeDataParser {
   static ParsedBarcodeData parseBarcodeData(String data, String? format) {
-    // EAN/UPC codes are usually product codes
+    String formatStr = format?.toUpperCase() ?? 'UNKNOWN';
+    
+    // Handle specific barcode formats
+    switch (formatStr) {
+      case 'EAN8':
+      case 'EAN_8':
+        return _parseEAN8(data);
+      case 'EAN13':
+      case 'EAN_13':
+        return _parseEAN13(data);
+      case 'UPCE':
+      case 'UPC_E':
+        return _parseUPCE(data);
+      case 'UPCA':
+      case 'UPC_A':
+        return _parseUPCA(data);
+      case 'CODE39':
+      case 'CODE_39':
+        return _parseCode39(data);
+      case 'CODE93':
+      case 'CODE_93':
+        return _parseCode93(data);
+      case 'CODE128':
+      case 'CODE_128':
+        return _parseCode128(data);
+      case 'ITF':
+      case 'INTERLEAVED_TWO_OF_FIVE':
+        return _parseITF(data);
+      case 'PDF417':
+      case 'PDF_417':
+        return _parsePDF417(data);
+      case 'CODABAR':
+        return _parseCodabar(data);
+      case 'DATAMATRIX':
+      case 'DATA_MATRIX':
+        return _parseDataMatrix(data);
+      case 'AZTEC':
+        return _parseAztec(data);
+    }
+    
+    // Legacy format handling for backward compatibility
     if (format != null && (format.contains('EAN') || format.contains('UPC'))) {
       return _parseProductCode(data, format);
     }
@@ -53,6 +93,190 @@ class BarcodeDataParser {
       type: BarcodeDataType.text,
       rawData: data,
       parsedData: {'text': data, 'format': format ?? 'Unknown'},
+    );
+  }
+  
+  // EAN-8 barcode parser
+  static ParsedBarcodeData _parseEAN8(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.product,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'EAN-8',
+        'type': 'Product Code',
+        'description': 'European Article Number (8 digits)',
+      },
+    );
+  }
+  
+  // EAN-13 barcode parser
+  static ParsedBarcodeData _parseEAN13(String data) {
+    String countryCode = data.length >= 3 ? data.substring(0, 3) : '';
+    String manufacturerCode = data.length >= 7 ? data.substring(3, 7) : '';
+    String productCode = data.length >= 12 ? data.substring(7, 12) : '';
+    String checkDigit = data.length >= 13 ? data.substring(12) : '';
+    
+    return ParsedBarcodeData(
+      type: BarcodeDataType.product,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'EAN-13',
+        'type': 'Product Code',
+        'description': 'European Article Number (13 digits)',
+        'country_code': countryCode,
+        'manufacturer_code': manufacturerCode,
+        'product_code': productCode,
+        'check_digit': checkDigit,
+      },
+    );
+  }
+  
+  // UPC-E barcode parser
+  static ParsedBarcodeData _parseUPCE(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.product,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'UPC-E',
+        'type': 'Product Code',
+        'description': 'Universal Product Code (8 digits, compressed)',
+      },
+    );
+  }
+  
+  // UPC-A barcode parser
+  static ParsedBarcodeData _parseUPCA(String data) {
+    String manufacturerCode = data.length >= 6 ? data.substring(1, 6) : '';
+    String productCode = data.length >= 11 ? data.substring(6, 11) : '';
+    String checkDigit = data.length >= 12 ? data.substring(11) : '';
+    
+    return ParsedBarcodeData(
+      type: BarcodeDataType.product,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'UPC-A',
+        'type': 'Product Code',
+        'description': 'Universal Product Code (12 digits)',
+        'manufacturer_code': manufacturerCode,
+        'product_code': productCode,
+        'check_digit': checkDigit,
+      },
+    );
+  }
+  
+  // CODE-39 barcode parser
+  static ParsedBarcodeData _parseCode39(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.text,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'CODE-39',
+        'type': 'Alphanumeric Code',
+        'description': 'Code 39 supports numbers, letters, and special characters',
+      },
+    );
+  }
+  
+  // CODE-93 barcode parser
+  static ParsedBarcodeData _parseCode93(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.text,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'CODE-93',
+        'type': 'Alphanumeric Code',
+        'description': 'Code 93 is a higher density variant of Code 39',
+      },
+    );
+  }
+  
+  // CODE-128 barcode parser
+  static ParsedBarcodeData _parseCode128(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.text,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'CODE-128',
+        'type': 'High-density Code',
+        'description': 'Code 128 supports full ASCII character set',
+      },
+    );
+  }
+  
+  // ITF (Interleaved 2 of 5) barcode parser
+  static ParsedBarcodeData _parseITF(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.text,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'ITF',
+        'type': 'Numeric Code',
+        'description': 'Interleaved 2 of 5 (ITF) - numeric only',
+      },
+    );
+  }
+  
+  // PDF-417 barcode parser (2D)
+  static ParsedBarcodeData _parsePDF417(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.text,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'PDF-417',
+        'type': '2D Barcode',
+        'description': 'PDF417 can store large amounts of data including text, numbers, files',
+      },
+    );
+  }
+  
+  // CODABAR barcode parser
+  static ParsedBarcodeData _parseCodabar(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.text,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'CODABAR',
+        'type': 'Numeric Code',
+        'description': 'CODABAR is used in libraries, blood banks, and shipping',
+      },
+    );
+  }
+  
+  // Data Matrix barcode parser (2D)
+  static ParsedBarcodeData _parseDataMatrix(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.text,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'DATA MATRIX',
+        'type': '2D Barcode',
+        'description': 'Data Matrix can encode text, numbers, and binary data efficiently',
+      },
+    );
+  }
+  
+  // Aztec barcode parser (2D)
+  static ParsedBarcodeData _parseAztec(String data) {
+    return ParsedBarcodeData(
+      type: BarcodeDataType.text,
+      rawData: data,
+      parsedData: {
+        'code': data,
+        'format': 'AZTEC',
+        'type': '2D Barcode',
+        'description': 'Aztec Code is used for tickets, ID cards, and mobile applications',
+      },
     );
   }
   

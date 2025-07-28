@@ -462,7 +462,33 @@ class ScanCodePageContent extends StatefulWidget {
 }
 
 class _ScanCodePageContentState extends State<ScanCodePageContent> {
-  MobileScannerController controller = MobileScannerController();
+  // Enhanced MobileScannerController with support for all major barcode formats
+  // Supports: QR Code, EAN-8, EAN-13, UPC-E, UPC-A, CODE-39, CODE-93, 
+  // CODE-128, ITF, PDF-417, CODABAR, Data Matrix, and Aztec
+  MobileScannerController controller = MobileScannerController(
+    formats: [
+      // QR Code formats
+      BarcodeFormat.qrCode,
+      
+      // 1D Barcode formats
+      BarcodeFormat.ean8,       // EAN-8
+      BarcodeFormat.ean13,      // EAN-13
+      BarcodeFormat.upcE,       // UPC-E
+      BarcodeFormat.upcA,       // UPC-A
+      BarcodeFormat.code39,     // CODE-39
+      BarcodeFormat.code93,     // CODE-93
+      BarcodeFormat.code128,    // CODE-128
+      BarcodeFormat.itf,        // ITF (Interleaved 2 of 5)
+      BarcodeFormat.codabar,    // CODABAR
+      
+      // 2D Barcode formats
+      BarcodeFormat.pdf417,     // PDF-417
+      BarcodeFormat.dataMatrix, // DATA MATRIX
+      BarcodeFormat.aztec,      // AZTEC
+    ],
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    detectionTimeoutMs: 1000,
+  );
   double _zoomFactor = 0.0;
   bool _isFlashOn = false;
   bool _isScanning = true;
@@ -595,7 +621,7 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
     return Column(
       children: [
         AppBar(
-          title: const Text('Scan QR Code / Barcode'),
+          title: const Text('Scan QR/Barcode (All Formats)'),
           automaticallyImplyLeading: false,
           backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
@@ -836,6 +862,22 @@ class _ScanCodePageContentState extends State<ScanCodePageContent> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black38,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: const Text(
+                        'Supports: QR, EAN-8/13, UPC-A/E, CODE-39/93/128, ITF, PDF-417, CODABAR, Data Matrix, Aztec',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -857,7 +899,33 @@ class ScanCodePage extends StatefulWidget {
 
 class _ScanCodePageState extends State<ScanCodePage> {
   int _currentIndex = 0;
-  MobileScannerController controller = MobileScannerController();
+  // Enhanced MobileScannerController with support for all major barcode formats
+  // Supports: QR Code, EAN-8, EAN-13, UPC-E, UPC-A, CODE-39, CODE-93, 
+  // CODE-128, ITF, PDF-417, CODABAR, Data Matrix, and Aztec
+  MobileScannerController controller = MobileScannerController(
+    formats: [
+      // QR Code formats
+      BarcodeFormat.qrCode,
+      
+      // 1D Barcode formats
+      BarcodeFormat.ean8,       // EAN-8
+      BarcodeFormat.ean13,      // EAN-13
+      BarcodeFormat.upcE,       // UPC-E
+      BarcodeFormat.upcA,       // UPC-A
+      BarcodeFormat.code39,     // CODE-39
+      BarcodeFormat.code93,     // CODE-93
+      BarcodeFormat.code128,    // CODE-128
+      BarcodeFormat.itf,        // ITF (Interleaved 2 of 5)
+      BarcodeFormat.codabar,    // CODABAR
+      
+      // 2D Barcode formats
+      BarcodeFormat.pdf417,     // PDF-417
+      BarcodeFormat.dataMatrix, // DATA MATRIX
+      BarcodeFormat.aztec,      // AZTEC
+    ],
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    detectionTimeoutMs: 1000,
+  );
   double _zoomFactor = 0.0;
   bool _isFlashOn = false;
   bool _isScanning = true;
@@ -987,7 +1055,7 @@ class _ScanCodePageState extends State<ScanCodePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan QR Code / Barcode'),
+        title: const Text('Scan QR/Barcode (All Formats)'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         actions: [
@@ -1222,6 +1290,22 @@ class _ScanCodePageState extends State<ScanCodePage> {
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Text(
+                    'Supports: QR, EAN-8/13, UPC-A/E, CODE-39/93/128, ITF, PDF-417, CODABAR, Data Matrix, Aztec',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],
