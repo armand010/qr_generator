@@ -7,7 +7,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import 'package:barcode/barcode.dart';
 import '../../providers/theme_provider.dart';
+import '../../services/history_service.dart';
 
 class CODABARBarcodePage extends StatefulWidget {
   const CODABARBarcodePage({super.key});
@@ -35,6 +37,13 @@ class _CODABARBarcodePageState extends State<CODABARBarcodePage> {
         _barcodeData = _codeController.text.trim().toUpperCase();
         _showBarcode = true;
       });
+      
+      // Add to history
+      HistoryService().addGeneratedItem(
+        content: _barcodeData,
+        format: 'CODABAR',
+        category: 'barcode',
+      );
       
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -152,12 +161,20 @@ class _CODABARBarcodePageState extends State<CODABARBarcodePage> {
 
   Widget _buildBarcode() {
     try {
+      // Create CODABAR barcode using the barcode library
+      final bc = Barcode.codabar();
+      
+      // Validate the data first
+      if (!bc.isValid(_barcodeData)) {
+        throw Exception('Invalid CODABAR data');
+      }
+      
       return Container(
-        width: 320, // Increased width
+        width: 320,
         height: 100,
         color: Colors.white,
         child: CustomPaint(
-          painter: CODABARPainter(_barcodeData),
+          painter: BarcodeLibraryPainter(bc, _barcodeData),
           size: const Size(320, 100),
         ),
       );
@@ -177,8 +194,9 @@ class _CODABARBarcodePageState extends State<CODABARBarcodePage> {
             Icon(Icons.error, color: Colors.red, size: 24),
             const SizedBox(height: 4),
             Text(
-              'Invalid CODABAR',
+              'Invalid CODABAR: ${e.toString()}',
               style: TextStyle(color: Colors.red, fontSize: 12),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -418,6 +436,81 @@ class _CODABARBarcodePageState extends State<CODABARBarcodePage> {
       },
     );
   }
+}
+
+// Custom painter using the barcode library
+class BarcodeLibraryPainter extends CustomPainter {
+  final Barcode barcode;
+  final String data;
+
+  BarcodeLibraryPainter(this.barcode, this.data);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    try {
+      // Generate the barcode data
+      final svg = barcode.toSvg(data, width: size.width, height: size.height);
+      
+      // Parse and draw the barcode
+      _drawBarcodeFromSvg(canvas, size, svg);
+    } catch (e) {
+      // Draw error message if barcode generation fails
+      _drawError(canvas, size, e.toString());
+    }
+  }
+
+  void _drawBarcodeFromSvg(Canvas canvas, Size size, String svg) {
+    // Simple SVG parsing for barcode rectangles
+    final rectPattern = RegExp(r'<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*fill="([^"]*)"[^>]*/>');
+    final matches = rectPattern.allMatches(svg);
+
+    final paint = Paint()
+      ..style = PaintingStyle.fill;
+
+    for (final match in matches) {
+      final x = double.tryParse(match.group(1) ?? '0') ?? 0;
+      final y = double.tryParse(match.group(2) ?? '0') ?? 0;
+      final width = double.tryParse(match.group(3) ?? '0') ?? 0;
+      final height = double.tryParse(match.group(4) ?? '0') ?? 0;
+      final fill = match.group(5) ?? '#000000';
+
+      // Only draw black rectangles (bars)
+      if (fill == '#000000' || fill == 'black') {
+        paint.color = Colors.black;
+        canvas.drawRect(
+          Rect.fromLTWH(x, y, width, height),
+          paint,
+        );
+      }
+    }
+  }
+
+  void _drawError(Canvas canvas, Size size, String error) {
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = Colors.red.shade100,
+    );
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: 'Error: $error',
+        style: const TextStyle(color: Colors.red, fontSize: 12),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout(maxWidth: size.width);
+    textPainter.paint(
+      canvas,
+      Offset(
+        (size.width - textPainter.width) / 2,
+        (size.height - textPainter.height) / 2,
+      ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 // Custom painter for CODABAR barcode
