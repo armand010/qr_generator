@@ -7,7 +7,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import 'package:barcode/barcode.dart';
 import '../../providers/theme_provider.dart';
+import '../../services/history_service.dart';
 
 class EAN8BarcodePage extends StatefulWidget {
   const EAN8BarcodePage({super.key});
@@ -31,17 +33,58 @@ class _EAN8BarcodePageState extends State<EAN8BarcodePage> {
 
   void _generateBarcode() {
     if (_formKey.currentState!.validate()) {
+      final inputText = _codeController.text.trim();
+      final cleanText = inputText.replaceAll(RegExp(r'[^0-9]'), '');
+      
+      String finalData = cleanText;
+      
+      // Validate 8-digit input and show warning if check digit might be wrong
+      if (cleanText.length == 8) {
+        String first7 = cleanText.substring(0, 7);
+        int expectedCheckDigit = _calculateCheckDigit(first7);
+        int actualCheckDigit = int.parse(cleanText[7]);
+        
+        if (expectedCheckDigit != actualCheckDigit) {
+          // Show warning but still generate barcode
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Warning: Check digit might be incorrect. Expected: $expectedCheckDigit, but got: ${cleanText[7]}. Barcode generated anyway.'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+      
       setState(() {
-        _barcodeData = _codeController.text.trim();
+        _barcodeData = finalData;
         _showBarcode = true;
       });
+      
+      // Add to history
+      HistoryService().addGeneratedItem(content: _barcodeData, format: 'EAN_8');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('EAN-8 barcode generated successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (cleanText.length == 8) {
+        String first7 = cleanText.substring(0, 7);
+        int expectedCheckDigit = _calculateCheckDigit(first7);
+        int actualCheckDigit = int.parse(cleanText[7]);
+        
+        if (expectedCheckDigit == actualCheckDigit) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('EAN-8 barcode generated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('EAN-8 barcode generated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -54,21 +97,6 @@ class _EAN8BarcodePageState extends State<EAN8BarcodePage> {
   }
 
   // Calculate EAN-8 check digit
-  String _calculateCheckDigit(String code) {
-    if (code.length >= 7) {
-      String sevenDigits = code.substring(0, 7);
-      int sum = 0;
-      for (int i = 0; i < 7; i++) {
-        int digit = int.parse(sevenDigits[i]);
-        // EAN-8: multiply by 3 for odd positions (1st, 3rd, 5th, 7th), by 1 for even positions
-        sum += (i % 2 == 0) ? digit * 3 : digit;
-      }
-      int checkDigit = (10 - (sum % 10)) % 10;
-      return checkDigit.toString();
-    }
-    return '0';
-  }
-
   // Function to capture barcode as image
   Future<Uint8List?> _captureBarcode() async {
     try {
@@ -84,6 +112,17 @@ class _EAN8BarcodePageState extends State<EAN8BarcodePage> {
       debugPrint('Error capturing barcode: $e');
       return null;
     }
+  }
+
+  // Calculate EAN-8 check digit
+  int _calculateCheckDigit(String code) {
+    int sum = 0;
+    for (int i = 0; i < 7; i++) {
+      int digit = int.parse(code[i]);
+      // EAN-8: multiply by 3 for odd positions (1st, 3rd, 5th, 7th), by 1 for even positions (2nd, 4th, 6th)
+      sum += (i % 2 == 0) ? digit * 3 : digit;
+    }
+    return (10 - (sum % 10)) % 10;
   }
 
   // Function to save barcode directly to gallery
@@ -217,13 +256,24 @@ class _EAN8BarcodePageState extends State<EAN8BarcodePage> {
 
   Widget _buildBarcode() {
     try {
+      // Prepare data for EAN-8
+      String cleanData = _barcodeData.replaceAll(RegExp(r'[^0-9]'), '');
+      
+      // Handle 7-digit input (calculate check digit) or 8-digit input
+      if (cleanData.length == 7) {
+        int checkDigit = _calculateCheckDigit(cleanData);
+        cleanData += checkDigit.toString();
+      } else if (cleanData.length != 8) {
+        throw Exception('EAN-8 must be 7 or 8 digits');
+      }
+      
+      // Use EAN8Painter which has better scanning compatibility
       return Container(
-        // Proporsi standar EAN-8 untuk scanning optimal
         width: 300,
         height: 100,
         color: Colors.white,
         child: CustomPaint(
-          painter: EAN8Painter(_barcodeData),
+          painter: EAN8Painter(cleanData),
           size: const Size(300, 100),
         ),
       );
@@ -240,11 +290,12 @@ class _EAN8BarcodePageState extends State<EAN8BarcodePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error, color: Colors.red, size: 24),
+            const Icon(Icons.error, color: Colors.red, size: 24),
             const SizedBox(height: 4),
             Text(
-              'Invalid EAN-8',
-              style: TextStyle(color: Colors.red, fontSize: 12),
+              'Invalid EAN-8: ${e.toString()}',
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -406,7 +457,7 @@ class _EAN8BarcodePageState extends State<EAN8BarcodePage> {
                                   const SizedBox(height: 8),
                                   Text(
                                     _barcodeData.length == 7
-                                        ? '${_barcodeData.substring(0, 7)}${_calculateCheckDigit(_barcodeData)}'
+                                        ? '${_barcodeData.substring(0, 7)}${_calculateCheckDigit(_barcodeData).toString()}'
                                         : _barcodeData,
                                     style: const TextStyle(
                                       fontSize: 16,
@@ -514,7 +565,158 @@ class _EAN8BarcodePageState extends State<EAN8BarcodePage> {
   }
 }
 
-// Custom painter untuk EAN-8 barcode yang dapat di-scan
+// Custom painter using proper EAN-8 standard implementation
+class EAN8BarcodeCustomPainter extends CustomPainter {
+  final Barcode barcode;
+  final String data;
+
+  EAN8BarcodeCustomPainter(this.barcode, this.data);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    try {
+      // Prepare and validate data
+      String cleanData = data.replaceAll(RegExp(r'[^0-9]'), '');
+      
+      // Handle 7-digit input (calculate check digit) or 8-digit input
+      if (cleanData.length == 7) {
+        int checkDigit = _calculateEAN8CheckDigit(cleanData);
+        cleanData += checkDigit.toString();
+      } else if (cleanData.length == 8) {
+        // For 8-digit input, accept it as is
+      } else {
+        throw Exception('EAN-8 must be 7 or 8 digits');
+      }
+
+      // Use the barcode library to generate proper EAN-8
+      _drawBarcodeFromLibrary(canvas, size, cleanData);
+
+    } catch (e) {
+      // Draw error message
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: 'Error: ${e.toString()}',
+          style: const TextStyle(
+            color: Colors.red,
+            fontSize: 12,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset((size.width - textPainter.width) / 2, (size.height - textPainter.height) / 2),
+      );
+    }
+  }
+
+  void _drawBarcodeFromLibrary(Canvas canvas, Size size, String data) {
+    // Use the barcode library's built-in method to ensure proper EAN-8 encoding
+    final bc = Barcode.ean8();
+    
+    // Draw white background
+    final backgroundPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
+    
+    // Use built-in barcode generation
+    try {
+      // Generate proper EAN-8 pattern using library
+      final barcodeData = bc.make(data, width: size.width, height: size.height);
+      
+      // Draw the barcode elements
+      final paint = Paint()
+        ..color = Colors.black
+        ..style = PaintingStyle.fill;
+      
+      for (final element in barcodeData) {
+        if (element is BarcodeBar) {
+          final rect = Rect.fromLTWH(
+            element.left * size.width,
+            element.top * size.height,
+            element.width * size.width,
+            element.height * size.height,
+          );
+          canvas.drawRect(rect, paint);
+        }
+      }
+    } catch (e) {
+      // Fallback to manual implementation if library fails
+      _drawManualEAN8(canvas, size, data);
+    }
+  }
+
+  void _drawManualEAN8(Canvas canvas, Size size, String data) {
+    // Manual EAN-8 implementation as fallback
+    final paint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.fill;
+
+    // EAN-8 patterns (L-patterns for left, R-patterns for right)
+    final leftPatterns = [
+      '0001101', '0011001', '0010011', '0111101', '0100011',
+      '0110001', '0101111', '0111011', '0110111', '0001011'
+    ];
+
+    final rightPatterns = [
+      '1110010', '1100110', '1101100', '1000010', '1011100',
+      '1001110', '1010000', '1000100', '1001000', '1110100'
+    ];
+
+    String pattern = '101'; // Start guard
+    
+    // Left group (4 digits)
+    for (int i = 0; i < 4; i++) {
+      int digit = int.parse(data[i]);
+      pattern += leftPatterns[digit];
+    }
+    
+    pattern += '01010'; // Center guard
+    
+    // Right group (4 digits)
+    for (int i = 4; i < 8; i++) {
+      int digit = int.parse(data[i]);
+      pattern += rightPatterns[digit];
+    }
+    
+    pattern += '101'; // End guard
+
+    // Draw with proper quiet zones (7 modules each side for EAN-8)
+    final int totalModules = pattern.length + 14; // barcode + quiet zones
+    final double moduleWidth = size.width / totalModules;
+    final double quietZoneWidth = 7 * moduleWidth;
+    
+    double currentX = quietZoneWidth; // Start after left quiet zone
+    
+    for (int i = 0; i < pattern.length; i++) {
+      if (pattern[i] == '1') {
+        canvas.drawRect(
+          Rect.fromLTWH(currentX, 0, moduleWidth, size.height),
+          paint,
+        );
+      }
+      currentX += moduleWidth;
+    }
+  }
+
+  int _calculateEAN8CheckDigit(String code) {
+    int sum = 0;
+    for (int i = 0; i < 7; i++) {
+      int digit = int.parse(code[i]);
+      // EAN-8: multiply by 3 for odd positions (1st, 3rd, 5th, 7th), by 1 for even positions (2nd, 4th, 6th)
+      sum += (i % 2 == 0) ? digit * 3 : digit;
+    }
+    return (10 - (sum % 10)) % 10;
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Custom painter untuk EAN-8 barcode yang dapat di-scan dengan implementasi yang benar
 class EAN8Painter extends CustomPainter {
   final String data;
 
@@ -529,18 +731,24 @@ class EAN8Painter extends CustomPainter {
         throw Exception('Invalid EAN-8 length');
       }
 
-      // Calculate check digit if needed - menggunakan algoritma yang sama dengan EAN-13
+      // Calculate check digit if needed
       if (code.length == 7) {
         code = code.substring(0, 7);
-        int checkDigit = _calculateCheckDigit(code);
+        int sum = 0;
+        for (int i = 0; i < 7; i++) {
+          int digit = int.parse(code[i]);
+          // EAN-8: multiply by 3 for odd positions, by 1 for even positions
+          sum += (i % 2 == 0) ? digit * 3 : digit;
+        }
+        int checkDigit = (10 - (sum % 10)) % 10;
         code += checkDigit.toString();
       }
 
-      // Generate barcode pattern
+      // Generate barcode pattern using standard EAN-8 encoding
       List<bool> barPattern = _generateEAN8Pattern(code);
       
-      // Draw barcode with proper dimensions - sama seperti EAN-13
-      _drawBars(canvas, size, barPattern);
+      // Draw barcode dengan dimensi yang benar dan quiet zones
+      _drawBarsWithQuietZones(canvas, size, barPattern);
 
     } catch (e) {
       // Draw error indicator
@@ -561,20 +769,10 @@ class EAN8Painter extends CustomPainter {
     }
   }
 
-  int _calculateCheckDigit(String code) {
-    int sum = 0;
-    for (int i = 0; i < 7; i++) {
-      int digit = int.parse(code[i]);
-      // EAN-8: multiply by 3 for odd positions (1st, 3rd, 5th, 7th), by 1 for even positions (2nd, 4th, 6th)
-      sum += (i % 2 == 0) ? digit * 3 : digit;
-    }
-    return (10 - (sum % 10)) % 10;
-  }
-
   List<bool> _generateEAN8Pattern(String code) {
-    // EAN-8 encoding patterns - menggunakan L-patterns dan R-patterns yang tepat
-    final List<String> leftOddPatterns = [
-      '0001101', // 0 - L-pattern
+    // EAN-8 encoding patterns sesuai standar
+    final List<String> leftPatterns = [
+      '0001101', // 0
       '0011001', // 1
       '0010011', // 2
       '0111101', // 3
@@ -587,7 +785,7 @@ class EAN8Painter extends CustomPainter {
     ];
 
     final List<String> rightPatterns = [
-      '1110010', // 0 - R-pattern
+      '1110010', // 0
       '1100110', // 1
       '1101100', // 2
       '1000010', // 3
@@ -601,42 +799,40 @@ class EAN8Painter extends CustomPainter {
 
     List<bool> pattern = [];
 
-    // Start guard: 101 - sama seperti EAN-13
+    // Start guard: 101
     pattern.addAll([true, false, true]);
 
-    // Left group (4 digits using L-patterns only)
+    // Left group (first 4 digits using left patterns)
     for (int i = 0; i < 4; i++) {
       int digit = int.parse(code[i]);
-      String digitPattern = leftOddPatterns[digit];
+      String digitPattern = leftPatterns[digit];
       
-      // Add digit pattern
       for (int j = 0; j < digitPattern.length; j++) {
         pattern.add(digitPattern[j] == '1');
       }
     }
 
-    // Center guard: 01010 - sama seperti EAN-13
+    // Center guard: 01010
     pattern.addAll([false, true, false, true, false]);
 
-    // Right group (4 digits using R-patterns)
+    // Right group (last 4 digits using right patterns)
     for (int i = 4; i < 8; i++) {
       int digit = int.parse(code[i]);
       String digitPattern = rightPatterns[digit];
       
-      // Add digit pattern
       for (int j = 0; j < digitPattern.length; j++) {
         pattern.add(digitPattern[j] == '1');
       }
     }
 
-    // End guard: 101 - sama seperti EAN-13
+    // End guard: 101
     pattern.addAll([true, false, true]);
 
     return pattern;
   }
 
-  void _drawBars(Canvas canvas, Size size, List<bool> pattern) {
-    // Draw white background first - sama seperti EAN-13
+  void _drawBarsWithQuietZones(Canvas canvas, Size size, List<bool> pattern) {
+    // Draw white background
     final backgroundPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
@@ -646,23 +842,24 @@ class EAN8Painter extends CustomPainter {
       ..color = Colors.black
       ..style = PaintingStyle.fill;
     
-    // Calculate dimensions with proper quiet zones untuk EAN-8
-    // EAN-8 membutuhkan quiet zone: 7 modules kiri, 7 modules kanan
-    // Total: 7 (left) + 67 (barcode) + 7 (right) = 81 modules
-    final int totalModules = pattern.length + 7 + 7; // bars + left quiet zone + right quiet zone
+    // EAN-8 requires quiet zones: 7 modules on each side
+    // Total modules: 7 (quiet) + 67 (barcode) + 7 (quiet) = 81
+    const int quietZoneModules = 7;
+    final int totalModules = pattern.length + (quietZoneModules * 2);
     final double moduleWidth = size.width / totalModules;
     final double barHeight = size.height;
     
-    double currentX = 7 * moduleWidth; // Start after left quiet zone (7 modules untuk EAN-8)
+    // Start drawing after left quiet zone
+    double currentX = quietZoneModules * moduleWidth;
     
     for (int i = 0; i < pattern.length; i++) {
       if (pattern[i]) {
-        // Draw black bar with full height
+        // Draw black bar
         canvas.drawRect(
           Rect.fromLTWH(
-            currentX, 
-            0, 
-            moduleWidth, 
+            currentX,
+            0,
+            moduleWidth,
             barHeight
           ),
           paint,
