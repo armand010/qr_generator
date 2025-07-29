@@ -30,6 +30,7 @@ class _HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin
   List<HistoryItem> _filteredHistory = [];
   bool _isLoading = true;
   String _selectedFilter = 'all'; // 'all', 'scanned', 'generated', 'qr', 'barcode'
+  static const int _maxDisplayItems = 20; // Limit display to 20 items
   
   late TabController _tabController;
 
@@ -54,7 +55,8 @@ class _HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin
       final history = await _historyService.getHistory();
       setState(() {
         _allHistory = history;
-        _filteredHistory = history;
+        // Apply current filter and limit to max display items
+        _filterHistory(_selectedFilter);
         _isLoading = false;
       });
     } catch (e) {
@@ -71,23 +73,29 @@ class _HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin
     setState(() {
       _selectedFilter = filter;
       
+      List<HistoryItem> filtered;
       switch (filter) {
         case 'all':
-          _filteredHistory = _allHistory;
+          filtered = _allHistory;
           break;
         case 'scanned':
-          _filteredHistory = _allHistory.where((item) => item.isScanned).toList();
+          filtered = _allHistory.where((item) => item.isScanned).toList();
           break;
         case 'generated':
-          _filteredHistory = _allHistory.where((item) => item.isGenerated).toList();
+          filtered = _allHistory.where((item) => item.isGenerated).toList();
           break;
         case 'qr':
-          _filteredHistory = _allHistory.where((item) => item.isQRCode).toList();
+          filtered = _allHistory.where((item) => item.isQRCode).toList();
           break;
         case 'barcode':
-          _filteredHistory = _allHistory.where((item) => item.isBarcode).toList();
+          filtered = _allHistory.where((item) => item.isBarcode).toList();
           break;
+        default:
+          filtered = _allHistory;
       }
+      
+      // Limit to maximum display items
+      _filteredHistory = filtered.take(_maxDisplayItems).toList();
     });
   }
 
@@ -99,7 +107,8 @@ class _HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin
 
     final results = await _historyService.searchHistory(query);
     setState(() {
-      _filteredHistory = results;
+      // Limit search results to maximum display items
+      _filteredHistory = results.take(_maxDisplayItems).toList();
     });
   }
 
@@ -361,6 +370,33 @@ class _HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin
     );
   }
 
+  String _buildItemCountText() {
+    int totalCount = 0;
+    switch (_selectedFilter) {
+      case 'all':
+        totalCount = _allHistory.length;
+        break;
+      case 'scanned':
+        totalCount = _allHistory.where((item) => item.isScanned).length;
+        break;
+      case 'generated':
+        totalCount = _allHistory.where((item) => item.isGenerated).length;
+        break;
+      case 'qr':
+        totalCount = _allHistory.where((item) => item.isQRCode).length;
+        break;
+      case 'barcode':
+        totalCount = _allHistory.where((item) => item.isBarcode).length;
+        break;
+    }
+    
+    if (totalCount <= _maxDisplayItems) {
+      return 'Showing $totalCount items';
+    } else {
+      return 'Showing ${_filteredHistory.length} of $totalCount items (limited to $_maxDisplayItems)';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
@@ -408,7 +444,21 @@ class _HistoryPageState extends State<HistoryPage> with TickerProviderStateMixin
               // Filter chips
               _buildFilterChips(),
               
-              const SizedBox(height: 16),
+              // Show item count info
+              if (_allHistory.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    _buildItemCountText(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              
+              const SizedBox(height: 8),
               
               // History list
               Expanded(
