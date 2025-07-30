@@ -7,6 +7,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import 'package:provider/provider.dart';
+import '../../services/history_service.dart';
+import '../../providers/theme_provider.dart';
 
 class LocationQRPage extends StatefulWidget {
   const LocationQRPage({super.key});
@@ -48,6 +51,9 @@ class _LocationQRPageState extends State<LocationQRPage> {
         _qrData = mapsUrl;
         _showQR = true;
       });
+
+      // Add to history
+      HistoryService().addGeneratedItem(content: _qrData, format: 'QR_CODE');
     } else if (_latitudeController.text.trim().isNotEmpty ||
         _longitudeController.text.trim().isNotEmpty) {
       setState(() {
@@ -230,14 +236,16 @@ class _LocationQRPageState extends State<LocationQRPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Location QR Code'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.black,
-      ),
-      backgroundColor: Colors.grey[200],
-      body: SingleChildScrollView(
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Location QR Code'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            centerTitle: true,
+          ),
+          body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -262,21 +270,14 @@ class _LocationQRPageState extends State<LocationQRPage> {
                       ),
                       decoration: InputDecoration(
                         labelText: 'Latitude *',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         hintText: 'e.g. -6.2088',
-                        hintStyle: const TextStyle(color: Colors.grey),
                         prefixIcon: const Icon(Icons.my_location),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -288,21 +289,14 @@ class _LocationQRPageState extends State<LocationQRPage> {
                       ),
                       decoration: InputDecoration(
                         labelText: 'Longitude *',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         hintText: 'e.g. 106.8456',
-                        hintStyle: const TextStyle(color: Colors.grey),
                         prefixIcon: const Icon(Icons.place),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -311,21 +305,14 @@ class _LocationQRPageState extends State<LocationQRPage> {
                       controller: _labelController,
                       decoration: InputDecoration(
                         labelText: 'Location Label (Optional)',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         hintText: 'e.g. Jakarta, Indonesia',
-                        hintStyle: const TextStyle(color: Colors.grey),
                         prefixIcon: const Icon(Icons.label),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -336,8 +323,8 @@ class _LocationQRPageState extends State<LocationQRPage> {
                           child: ElevatedButton(
                             onPressed: _generateLocationQR,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
                             child: Text('Generate QR Code'),
                           ),
@@ -346,8 +333,8 @@ class _LocationQRPageState extends State<LocationQRPage> {
                         ElevatedButton(
                           onPressed: _clearQR,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                            foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           child: Text('Clear'),
                         ),
@@ -372,14 +359,14 @@ class _LocationQRPageState extends State<LocationQRPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // QR Code with green border
+                      // QR Code with themed border
                       RepaintBoundary(
                         key: _qrKey,
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            border: Border.all(color: Colors.green, width: 2),
+                            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: SizedBox(
@@ -402,7 +389,7 @@ class _LocationQRPageState extends State<LocationQRPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: Theme.of(context).colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -410,27 +397,27 @@ class _LocationQRPageState extends State<LocationQRPage> {
                           children: [
                             Text(
                               'Latitude: ${_latitudeController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Longitude: ${_longitudeController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Label: ${_labelController.text.trim().isEmpty ? "-" : _labelController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -446,24 +433,24 @@ class _LocationQRPageState extends State<LocationQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _saveQRCode,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.save_alt,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Save',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -472,24 +459,24 @@ class _LocationQRPageState extends State<LocationQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _shareQRCode,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.share,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Share',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -502,7 +489,7 @@ class _LocationQRPageState extends State<LocationQRPage> {
                         'Tip: "Save" stores to gallery, "Share" sends to other apps',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -514,6 +501,8 @@ class _LocationQRPageState extends State<LocationQRPage> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

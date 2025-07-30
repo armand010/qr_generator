@@ -7,6 +7,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import 'package:provider/provider.dart';
+import '../../services/history_service.dart';
+import '../../providers/theme_provider.dart';
 
 class EventQRPage extends StatefulWidget {
   const EventQRPage({super.key});
@@ -47,11 +50,11 @@ class _EventQRPageState extends State<EventQRPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Colors.green,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Theme.of(context).colorScheme.onPrimary,
+              surface: Theme.of(context).colorScheme.surface,
+              onSurface: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           child: child!,
@@ -145,6 +148,9 @@ class _EventQRPageState extends State<EventQRPage> {
       _qrData = eventData;
       _showQR = true;
     });
+
+    // Add to history
+    HistoryService().addGeneratedItem(content: _qrData, format: 'QR_CODE');
 
     // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
@@ -330,14 +336,16 @@ class _EventQRPageState extends State<EventQRPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Event QR Code'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.black,
-      ),
-      backgroundColor: Colors.grey[200],
-      body: SingleChildScrollView(
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Event QR Code'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            centerTitle: true,
+          ),
+          body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -359,18 +367,12 @@ class _EventQRPageState extends State<EventQRPage> {
                       controller: _eventNameController,
                       decoration: InputDecoration(
                         labelText: 'Event Name',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -380,18 +382,12 @@ class _EventQRPageState extends State<EventQRPage> {
                       maxLines: 3,
                       decoration: InputDecoration(
                         labelText: 'Description',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -400,18 +396,12 @@ class _EventQRPageState extends State<EventQRPage> {
                       controller: _locationController,
                       decoration: InputDecoration(
                         labelText: 'Location',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -423,22 +413,13 @@ class _EventQRPageState extends State<EventQRPage> {
                           _selectDate(_startDateController, 'Start Date'),
                       decoration: InputDecoration(
                         labelText: 'Start Date',
-                        labelStyle: const TextStyle(color: Colors.grey),
-                        suffixIcon: const Icon(
-                          Icons.calendar_today,
-                          color: Colors.grey,
-                        ),
+                        suffixIcon: const Icon(Icons.calendar_today),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -449,22 +430,13 @@ class _EventQRPageState extends State<EventQRPage> {
                       onTap: () => _selectDate(_endDateController, 'End Date'),
                       decoration: InputDecoration(
                         labelText: 'End Date',
-                        labelStyle: const TextStyle(color: Colors.grey),
-                        suffixIcon: const Icon(
-                          Icons.calendar_today,
-                          color: Colors.grey,
-                        ),
+                        suffixIcon: const Icon(Icons.calendar_today),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -475,8 +447,8 @@ class _EventQRPageState extends State<EventQRPage> {
                           child: ElevatedButton(
                             onPressed: _generateEventQR,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),
@@ -492,8 +464,8 @@ class _EventQRPageState extends State<EventQRPage> {
                         ElevatedButton(
                           onPressed: _clearQR,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                            foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                             padding: const EdgeInsets.symmetric(
                               vertical: 16,
                               horizontal: 20,
@@ -532,7 +504,7 @@ class _EventQRPageState extends State<EventQRPage> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            border: Border.all(color: Colors.green, width: 2),
+                            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: SizedBox(
@@ -555,7 +527,7 @@ class _EventQRPageState extends State<EventQRPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: Theme.of(context).colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -563,45 +535,45 @@ class _EventQRPageState extends State<EventQRPage> {
                           children: [
                             Text(
                               'Event Name: ${_eventNameController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Description: ${_descriptionController.text.trim().isEmpty ? "-" : _descriptionController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Location: ${_locationController.text.trim().isEmpty ? "-" : _locationController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Start: ${_startDateController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'End: ${_endDateController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -617,24 +589,24 @@ class _EventQRPageState extends State<EventQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _saveQRCode,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.save_alt,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Save',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -643,24 +615,24 @@ class _EventQRPageState extends State<EventQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _shareQRCode,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.share,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Share',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -673,7 +645,7 @@ class _EventQRPageState extends State<EventQRPage> {
                         'Tip: "Save" stores to gallery, "Share" sends to other apps',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -685,6 +657,8 @@ class _EventQRPageState extends State<EventQRPage> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

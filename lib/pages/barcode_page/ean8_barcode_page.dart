@@ -39,22 +39,7 @@ class _EAN8BarcodePageState extends State<EAN8BarcodePage> {
       String finalData = cleanText;
       
       // Validate 8-digit input and show warning if check digit might be wrong
-      if (cleanText.length == 8) {
-        String first7 = cleanText.substring(0, 7);
-        int expectedCheckDigit = _calculateCheckDigit(first7);
-        int actualCheckDigit = int.parse(cleanText[7]);
-        
-        if (expectedCheckDigit != actualCheckDigit) {
-          // Show warning but still generate barcode
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Warning: Check digit might be incorrect. Expected: $expectedCheckDigit, but got: ${cleanText[7]}. Barcode generated anyway.'),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        }
-      }
+      
       
       setState(() {
         _barcodeData = finalData;

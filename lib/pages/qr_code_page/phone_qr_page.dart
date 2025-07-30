@@ -7,7 +7,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import 'package:provider/provider.dart';
 import '../../services/history_service.dart';
+import '../../providers/theme_provider.dart';
 
 class PhoneQRPage extends StatefulWidget {
   const PhoneQRPage({super.key});
@@ -225,14 +227,16 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Phone QR Code'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.black,
-      ),
-      backgroundColor: Colors.grey[200],
-      body: SingleChildScrollView(
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Phone QR Code'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            centerTitle: true,
+          ),
+          body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -255,21 +259,14 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         labelText: 'Phone Number *',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         hintText: '+1234567890',
-                        hintStyle: TextStyle(color: Colors.grey),
                         prefixIcon: const Icon(Icons.phone),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -280,8 +277,8 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                           child: ElevatedButton(
                             onPressed: _generatePhoneQR,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
                             child: Text('Generate QR Code'),
                           ),
@@ -290,8 +287,8 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                         ElevatedButton(
                           onPressed: _clearQR,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                            foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           child: Text('Clear'),
                         ),
@@ -323,7 +320,7 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            border: Border.all(color: Colors.green, width: 2),
+                            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: SizedBox(
@@ -346,7 +343,7 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: Theme.of(context).colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -354,9 +351,9 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                           children: [
                             Text(
                               'Phone Number: ${_phoneController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -372,24 +369,24 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _saveQRCode,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.save_alt,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Save',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -398,24 +395,24 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _shareQRCode,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.share,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Share',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -428,7 +425,7 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
                         'Tip: "Save" stores to gallery, "Share" sends to other apps',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -440,6 +437,8 @@ class _PhoneQRPageState extends State<PhoneQRPage> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

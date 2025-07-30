@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'dart:ui' as ui;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
 import '../../services/history_service.dart';
+import '../../providers/theme_provider.dart';
 
 class URLQRPage extends StatefulWidget {
   const URLQRPage({super.key});
@@ -202,14 +204,16 @@ class _URLQRPageState extends State<URLQRPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('URL QR Code'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.black,
-      ),
-      backgroundColor: Colors.grey[200],
-      body: SingleChildScrollView(
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('URL QR Code'),
+            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+            centerTitle: true,
+          ),
+          body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -229,21 +233,14 @@ class _URLQRPageState extends State<URLQRPage> {
                       keyboardType: TextInputType.url,
                       decoration: InputDecoration(
                         labelText: 'Website URL',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         hintText: 'example.com',
-                        hintStyle: TextStyle(color: Colors.grey),
                         prefixIcon: const Icon(Icons.link),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey,),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green,),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -254,8 +251,8 @@ class _URLQRPageState extends State<URLQRPage> {
                           child: ElevatedButton(
                             onPressed: _generateURLQR,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
                             child: Text('Generate QR Code'),
                           ),
@@ -264,8 +261,8 @@ class _URLQRPageState extends State<URLQRPage> {
                         ElevatedButton(
                           onPressed: _clearQR,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                            foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           child: Text('Clear'),
                         ),
@@ -290,14 +287,14 @@ class _URLQRPageState extends State<URLQRPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // QR Code with green border
+                      // QR Code with themed border
                       RepaintBoundary(
                         key: _qrKey,
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            border: Border.all(color: Colors.green, width: 2),
+                            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: SizedBox(
@@ -318,14 +315,14 @@ class _URLQRPageState extends State<URLQRPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: Theme.of(context).colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           _qrData,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -339,21 +336,21 @@ class _URLQRPageState extends State<URLQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _saveQRCode,
-                                  icon: const Icon(Icons.save_alt, color: Colors.white),
+                                  icon: Icon(Icons.save_alt, color: Theme.of(context).colorScheme.onPrimary),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Save',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -362,21 +359,21 @@ class _URLQRPageState extends State<URLQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _shareQRCode,
-                                  icon: const Icon(Icons.share, color: Colors.white),
+                                  icon: Icon(Icons.share, color: Theme.of(context).colorScheme.onPrimary),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Share',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -389,7 +386,7 @@ class _URLQRPageState extends State<URLQRPage> {
                         'Tip: "Save" stores to gallery, "Share" sends to other apps',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -401,6 +398,8 @@ class _URLQRPageState extends State<URLQRPage> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

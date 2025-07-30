@@ -7,7 +7,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import 'package:provider/provider.dart';
 import '../../services/history_service.dart';
+import '../../providers/theme_provider.dart';
 
 class ContactQRPage extends StatefulWidget {
   const ContactQRPage({super.key});
@@ -287,14 +289,16 @@ class _ContactQRPageState extends State<ContactQRPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Contact QR Code'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-      ),
-      backgroundColor: Colors.grey[200],
-      body: SingleChildScrollView(
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Contact QR Code'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            centerTitle: true,
+          ),
+          body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -316,19 +320,13 @@ class _ContactQRPageState extends State<ContactQRPage> {
                           controller: _nameController,
                           decoration: InputDecoration(
                             labelText: 'Full Name *',
-                            labelStyle: const TextStyle(color: Colors.grey),
                             prefixIcon: const Icon(Icons.person),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
+                              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                             ),
                           ),
                         ),
@@ -338,21 +336,14 @@ class _ContactQRPageState extends State<ContactQRPage> {
                           keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
                             labelText: 'Phone Number *',
-                            labelStyle: const TextStyle(color: Colors.grey),
                             hintText: '+1234567890',
-                            hintStyle: TextStyle(color: Colors.grey),
                             prefixIcon: const Icon(Icons.phone),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
+                              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                             ),
                           ),
                         ),
@@ -362,21 +353,14 @@ class _ContactQRPageState extends State<ContactQRPage> {
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             labelText: 'Email Address *',
-                            labelStyle: const TextStyle(color: Colors.grey),
                             hintText: 'example@example.com',
-                            hintStyle: TextStyle(color: Colors.grey),
                             prefixIcon: const Icon(Icons.email),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
+                              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                             ),
                           ),
                         ),
@@ -385,21 +369,14 @@ class _ContactQRPageState extends State<ContactQRPage> {
                           controller: _addressController,
                           decoration: InputDecoration(
                             labelText: 'Address (Optional)',
-                            labelStyle: const TextStyle(color: Colors.grey),
                             hintText: '123 Main St, City, Country',
-                            hintStyle: TextStyle(color: Colors.grey),
                             prefixIcon: const Icon(Icons.location_on),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
+                              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                             ),
                           ),
                         ),
@@ -408,19 +385,13 @@ class _ContactQRPageState extends State<ContactQRPage> {
                           controller: _organizationController,
                           decoration: InputDecoration(
                             labelText: 'Organization/Company (Optional)',
-                            labelStyle: const TextStyle(color: Colors.grey),
                             prefixIcon: const Icon(Icons.business),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
+                              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                             ),
                           ),
                         ),
@@ -430,19 +401,13 @@ class _ContactQRPageState extends State<ContactQRPage> {
                           maxLines: 3,
                           decoration: InputDecoration(
                             labelText: 'Note (Optional)',
-                            labelStyle: const TextStyle(color: Colors.grey),
                             prefixIcon: const Icon(Icons.note),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.green),
+                              borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                             ),
                           ),
                         ),
@@ -453,8 +418,8 @@ class _ContactQRPageState extends State<ContactQRPage> {
                               child: ElevatedButton(
                                 onPressed: _generateContactQR,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: Theme.of(context).colorScheme.primary,
+                                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                                 ),
                                 child: const Text('Generate QR Code'),
                               ),
@@ -463,8 +428,8 @@ class _ContactQRPageState extends State<ContactQRPage> {
                             ElevatedButton(
                               onPressed: _clearQR,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey,
-                                foregroundColor: Colors.white,
+                                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                                foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                               child: const Text('Clear'),
                             ),
@@ -489,14 +454,14 @@ class _ContactQRPageState extends State<ContactQRPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // QR Code with green border
+                      // QR Code with themed border
                       RepaintBoundary(
                         key: _qrKey,
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            border: Border.all(color: Colors.green, width: 2),
+                            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: SizedBox(
@@ -519,7 +484,7 @@ class _ContactQRPageState extends State<ContactQRPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: Theme.of(context).colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -527,54 +492,54 @@ class _ContactQRPageState extends State<ContactQRPage> {
                           children: [
                             Text(
                               'Name: ${_nameController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Phone: ${_phoneController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Email: ${_emailController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Address: ${_addressController.text.trim().isEmpty ? "-" : _addressController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Organization: ${_organizationController.text.trim().isEmpty ? "-" : _organizationController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Note: ${_noteController.text.trim().isEmpty ? "-" : _noteController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -590,24 +555,24 @@ class _ContactQRPageState extends State<ContactQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _saveQRCode,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.save_alt,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Save',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -616,24 +581,24 @@ class _ContactQRPageState extends State<ContactQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _shareQRCode,
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.share,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Share',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -646,7 +611,7 @@ class _ContactQRPageState extends State<ContactQRPage> {
                         'Tip: "Save" stores to gallery, "Share" sends to other apps',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -658,6 +623,8 @@ class _ContactQRPageState extends State<ContactQRPage> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

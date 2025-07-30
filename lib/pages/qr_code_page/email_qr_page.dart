@@ -7,6 +7,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
+import 'package:provider/provider.dart';
+import '../../services/history_service.dart';
+import '../../providers/theme_provider.dart';
 
 class EmailQRPage extends StatefulWidget {
   const EmailQRPage({super.key});
@@ -76,6 +79,9 @@ class _EmailQRPageState extends State<EmailQRPage> {
       _qrData = mailto;
       _showQR = true;
     });
+
+    // Add to history
+    HistoryService().addGeneratedItem(content: _qrData, format: 'QR_CODE');
 
     // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
@@ -238,14 +244,16 @@ class _EmailQRPageState extends State<EmailQRPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Email QR Code'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-      ),
-      backgroundColor: Colors.grey[200],
-      body: SingleChildScrollView(
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Email QR Code'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            centerTitle: true,
+          ),
+          body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -268,21 +276,14 @@ class _EmailQRPageState extends State<EmailQRPage> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Email Address *',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         hintText: 'example@email.com',
-                        hintStyle: TextStyle(color: Colors.grey),
                         prefixIcon: const Icon(Icons.email),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -291,19 +292,13 @@ class _EmailQRPageState extends State<EmailQRPage> {
                       controller: _subjectController,
                       decoration: InputDecoration(
                         labelText: 'Subject (Optional)',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         prefixIcon: const Icon(Icons.subject),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -313,19 +308,13 @@ class _EmailQRPageState extends State<EmailQRPage> {
                       maxLines: 3,
                       decoration: InputDecoration(
                         labelText: 'Message Body (Optional)',
-                        labelStyle: const TextStyle(color: Colors.grey),
                         prefixIcon: const Icon(Icons.message),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Colors.green),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                     ),
@@ -336,8 +325,8 @@ class _EmailQRPageState extends State<EmailQRPage> {
                           child: ElevatedButton(
                             onPressed: _generateEmailQR,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             ),
                             child: const Text('Generate QR Code'),
                           ),
@@ -346,8 +335,8 @@ class _EmailQRPageState extends State<EmailQRPage> {
                         ElevatedButton(
                           onPressed: _clearQR,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                            foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           child: const Text('Clear'),
                         ),
@@ -379,7 +368,7 @@ class _EmailQRPageState extends State<EmailQRPage> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            border: Border.all(color: Colors.green, width: 2),
+                            border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: SizedBox(
@@ -400,7 +389,7 @@ class _EmailQRPageState extends State<EmailQRPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: Theme.of(context).colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -408,27 +397,27 @@ class _EmailQRPageState extends State<EmailQRPage> {
                           children: [
                             Text(
                               'Email: ${_emailController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Subject: ${_subjectController.text.trim().isEmpty ? "-" : _subjectController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Content: ${_bodyController.text.trim().isEmpty ? "-" : _bodyController.text.trim()}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -444,21 +433,21 @@ class _EmailQRPageState extends State<EmailQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _saveQRCode,
-                                  icon: const Icon(Icons.save_alt, color: Colors.white),
+                                  icon: Icon(Icons.save_alt, color: Theme.of(context).colorScheme.onPrimary),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Save',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -467,21 +456,21 @@ class _EmailQRPageState extends State<EmailQRPage> {
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: IconButton(
                                   onPressed: _shareQRCode,
-                                  icon: const Icon(Icons.share, color: Colors.white),
+                                  icon: Icon(Icons.share, color: Theme.of(context).colorScheme.onPrimary),
                                   iconSize: 24,
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
+                              Text(
                                 'Share',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -494,7 +483,7 @@ class _EmailQRPageState extends State<EmailQRPage> {
                         'Tip: "Save" stores to gallery, "Share" sends to other apps',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           fontStyle: FontStyle.italic,
                         ),
                         textAlign: TextAlign.center,
@@ -506,6 +495,8 @@ class _EmailQRPageState extends State<EmailQRPage> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

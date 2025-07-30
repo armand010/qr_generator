@@ -57,16 +57,16 @@ class _HomeWithNavigationState extends State<HomeWithNavigation> {
   ];
 
   final List<_QRItem> barcodeItems = [
-    _QRItem(icon: Icons.shopping_cart, label: 'EAN_13'),
     _QRItem(icon: Icons.shopping_bag, label: 'EAN_8'),
-    _QRItem(icon: Icons.code, label: 'CODE_128'),
+    _QRItem(icon: Icons.shopping_cart, label: 'EAN_13'),
     _QRItem(icon: Icons.barcode_reader, label: 'CODE_39'),
     _QRItem(icon: Icons.view_stream, label: 'CODE_93'),
+    _QRItem(icon: Icons.code, label: 'CODE_128'),
     _QRItem(icon: Icons.receipt_long, label: 'ITF'),
-    _QRItem(icon: Icons.picture_as_pdf, label: 'PDF_417'),
-    _QRItem(icon: Icons.qr_code_2, label: 'CODABAR'),
     _QRItem(icon: Icons.qr_code, label: 'UPC_A'),
     _QRItem(icon: Icons.qr_code_scanner, label: 'UPC_E'),
+    _QRItem(icon: Icons.picture_as_pdf, label: 'PDF_417'),
+    _QRItem(icon: Icons.qr_code_2, label: 'CODABAR'),
     _QRItem(icon: Icons.grid_on, label: 'DATA_MATRIX'),
     _QRItem(icon: Icons.blur_circular, label: 'AZTEC'),
   ];
@@ -280,26 +280,26 @@ class QRCard extends StatelessWidget {
     if (isBarcode) {
       // Barcode pages
       switch (label.toUpperCase()) {
-        case 'EAN_13':
-          return const EAN13BarcodePage();
         case 'EAN_8':
           return const EAN8BarcodePage();
-        case 'CODE_128':
-          return const Code128BarcodePage();
+        case 'EAN_13':
+          return const EAN13BarcodePage();
         case 'CODE_39':
           return const Code39BarcodePage();
         case 'CODE_93':
           return const Code93BarcodePage();
+        case 'CODE_128':
+          return const Code128BarcodePage();
         case 'ITF':
           return const ITFBarcodePage();
-        case 'PDF_417':
-          return const PDF417BarcodePage();
-        case 'CODABAR':
-          return const CODABARBarcodePage();
         case 'UPC_A':
           return const UPCABarcodePage();
         case 'UPC_E':
           return const UPCEBarcodePage();
+        case 'PDF_417':
+          return const PDF417BarcodePage();
+        case 'CODABAR':
+          return const CODABARBarcodePage();
         case 'DATA_MATRIX':
           return const DataMatrixBarcodePage();
         case 'AZTEC':
